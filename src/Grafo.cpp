@@ -1,7 +1,11 @@
 #include "Grafo.h"
+#include <iostream>
 
-
-Grafo::Grafo() {
+Grafo::Grafo(bool dir, bool pond_vertices, bool pond_arestas, int ordem) {
+    this->ordem = ordem;
+    this->in_direcionado = dir;
+    this->in_ponderado_aresta = pond_arestas;
+    this->in_ponderado_vertice = pond_vertices;
 }
 
 Grafo::~Grafo() {

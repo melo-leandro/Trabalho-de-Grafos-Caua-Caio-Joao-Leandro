@@ -1,4 +1,5 @@
 #include "Gerenciador.h"
+#include "No.h"
 #include <fstream>
 
 
@@ -227,4 +228,39 @@ bool Gerenciador::pergunta_imprimir_arquivo(string nome_arquivo) {
             cout<<"Resposta invalida"<<endl;
             return pergunta_imprimir_arquivo(nome_arquivo);
     }
+}
+
+Grafo* Gerenciador::carregarInformacoesEntrada(string nome_arquivo) {
+    ifstream arquivo(nome_arquivo);
+
+    bool direcionado, pond_vertices, pond_arestas;
+    arquivo >> direcionado >> pond_vertices >> pond_arestas;
+
+    int ordem;
+    arquivo >> ordem;
+
+    Grafo* grafo = new Grafo(direcionado, pond_vertices, pond_vertices, ordem);
+
+    //Ler os vértices
+    char id;
+    int peso;
+    for(int i = 0; i < ordem; i++){
+        arquivo >> id;
+
+        if(pond_vertices)
+            arquivo >> peso;
+        else
+            peso = 0;
+        
+        No* no = new No(id, peso);
+    }
+
+    //Ler as arestas
+    
+
+
+    
+
+
+    return nullptr;
 }
