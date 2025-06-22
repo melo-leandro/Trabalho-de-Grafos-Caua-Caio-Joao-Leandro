@@ -29,7 +29,7 @@ class Grafo {
         vector<char> periferia(); // h 4
         vector<char> vertices_de_articulacao(); // i
 
-        No* getNodeById(char id);
+        No* encontrar_no_por_id(char id);
   
         bool is_direcionado();
         void set_direcionado(bool dir);

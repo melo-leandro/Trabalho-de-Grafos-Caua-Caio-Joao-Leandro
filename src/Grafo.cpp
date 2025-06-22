@@ -11,7 +11,7 @@ Grafo::Grafo(bool dir, bool pond_vertices, bool pond_arestas, int ordem) {
 }
 
 //Função criada para encontrar nó no grafo a partir do ID
-No* Grafo::getNodeById(char id) {
+No* Grafo::encontrar_no_por_id(char id) {
     for(No* vertice: this->lista_adj){
         if(vertice->get_id() == id)
             return vertice;
