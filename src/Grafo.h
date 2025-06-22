@@ -29,6 +29,8 @@ public:
     vector<char> periferia(); // h 4
     vector<char> vertices_de_articulacao(); // i
 
+    No* getNodeById(char id);
+
 
     int ordem;
     bool in_direcionado;

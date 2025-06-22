@@ -8,6 +8,16 @@ Grafo::Grafo(bool dir, bool pond_vertices, bool pond_arestas, int ordem) {
     this->in_ponderado_vertice = pond_vertices;
 }
 
+//Função criada para encontrar nó no grafo a partir do ID
+No* Grafo::getNodeById(char id) {
+    for(No* vertice: this->lista_adj){
+        if(vertice->id == id)
+            return vertice;
+    }
+    return nullptr;
+}
+
+
 Grafo::~Grafo() {
 }
 
@@ -70,3 +80,4 @@ vector<char> Grafo::vertices_de_articulacao() {
     cout<<"Metodo nao implementado"<<endl;
     return {};
 }
+

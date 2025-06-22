@@ -233,13 +233,18 @@ bool Gerenciador::pergunta_imprimir_arquivo(string nome_arquivo) {
 Grafo* Gerenciador::carregarInformacoesEntrada(string nome_arquivo) {
     ifstream arquivo(nome_arquivo);
 
+    if(!arquivo.is_open()) {
+        cerr << "Erro ao abrir o arquivo: " << nome_arquivo << endl;
+        return nullptr;
+    }
+
     bool direcionado, pond_vertices, pond_arestas;
     arquivo >> direcionado >> pond_vertices >> pond_arestas;
 
     int ordem;
     arquivo >> ordem;
 
-    Grafo* grafo = new Grafo(direcionado, pond_vertices, pond_vertices, ordem);
+    Grafo* grafo = new Grafo(direcionado, pond_vertices, pond_arestas, ordem);
 
     //Ler os vértices
     char id;
@@ -253,14 +258,24 @@ Grafo* Gerenciador::carregarInformacoesEntrada(string nome_arquivo) {
             peso = 0;
         
         No* no = new No(id, peso);
+
+        grafo->lista_adj.push_back(no);
     }
 
     //Ler as arestas
-    
+    char no1, no2;
+    int pond;
+    while(arquivo >> no1 >> no2) {
+        if(pond_arestas)
+            arquivo >> pond;
+        else
+            pond = 1;
+        Aresta* aresta = new Aresta(no1, no2, pond);
+        for(No* vertice: grafo->lista_adj){
+            if(vertice->id == no1 || vertice->id == no2)
+                vertice->arestas.push_back(aresta);
+        }
+    }
 
-
-    
-
-
-    return nullptr;
+    return grafo;
 }

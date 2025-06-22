@@ -4,14 +4,12 @@
 using namespace std;
 class Aresta {
 public:
-    Aresta();
+    Aresta(char id_origem, char id_destino, int peso);
     ~Aresta();
 
-    char id_no_alvo;
+    char id_origem;
+    char id_destino;
     int peso;
-    
 };
-
-
 
 #endif //ARESTA_H
