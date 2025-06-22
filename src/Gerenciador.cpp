@@ -81,7 +81,7 @@ void Gerenciador::comandos(Grafo* grafo) {
             cout<<"Digite o tamanho do subconjunto: ";
             cin>>tam;
 
-            if(tam > 0 && tam <= grafo->ordem) {
+            if(tam > 0 && tam <= grafo->get_ordem()) {
 
                 vector<char> ids = get_conjunto_ids(grafo,tam);
                 Grafo* arvore_geradora_minima_prim = grafo->arvore_geradora_minima_prim(ids);
@@ -106,7 +106,7 @@ void Gerenciador::comandos(Grafo* grafo) {
             cout<<"Digite o tamanho do subconjunto: ";
             cin>>tam;
 
-            if(tam > 0 && tam <= grafo->ordem) {
+            if(tam > 0 && tam <= grafo->get_ordem()) {
 
                 vector<char> ids = get_conjunto_ids(grafo,tam);
                 Grafo* arvore_geradora_minima_kruskal = grafo->arvore_geradora_minima_kruskal(ids);
@@ -186,8 +186,8 @@ vector<char> Gerenciador::get_conjunto_ids(Grafo *grafo, int tam) {
     while((int)ids.size() < tam) {
         char id_no =get_id_entrada();
         bool existe = false;
-        for(No* no: grafo->lista_adj){
-            if(no->id == id_no){
+        for(No* no: grafo->get_lista_adj()){
+            if(no->get_id() == id_no){
                 existe = true;
                 break;
             }
@@ -209,7 +209,6 @@ vector<char> Gerenciador::get_conjunto_ids(Grafo *grafo, int tam) {
     return ids;
 }
 
-
 bool Gerenciador::pergunta_imprimir_arquivo(string nome_arquivo) {
 
     cout<<"Imprimir em arquivo externo? ("<<nome_arquivo<<")"<<endl;
@@ -230,7 +229,7 @@ bool Gerenciador::pergunta_imprimir_arquivo(string nome_arquivo) {
     }
 }
 
-Grafo* Gerenciador::carregarInformacoesEntrada(string nome_arquivo) {
+Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
     ifstream arquivo(nome_arquivo);
 
     if(!arquivo.is_open()) {
@@ -258,22 +257,45 @@ Grafo* Gerenciador::carregarInformacoesEntrada(string nome_arquivo) {
             peso = 0;
         
         No* no = new No(id, peso);
+        grafo->adicionar_no(no);
+    }
 
-        grafo->lista_adj.push_back(no);
+    if (grafo->get_lista_adj().size() != ordem) {
+
+        cerr << "Erro: número de vértices lido não corresponde à ordem especificada." << endl;
+        delete grafo;
+        return nullptr;
     }
 
     //Ler as arestas
     char no1, no2;
-    int pond;
+    int pond = 1;
     while(arquivo >> no1 >> no2) {
-        if(pond_arestas)
-            arquivo >> pond;
-        else
-            pond = 1;
+        if (pond_arestas && !(arquivo >> pond)) {
+            cerr << "Erro ao ler o peso da aresta entre " << no1 << " e " << no2 << endl;
+            delete grafo;
+            return nullptr;
+        }
+
         Aresta* aresta = new Aresta(no1, no2, pond);
-        for(No* vertice: grafo->lista_adj){
-            if(vertice->id == no1 || vertice->id == no2)
-                vertice->arestas.push_back(aresta);
+        
+        bool no1_encontrado = false, no2_encontrado = false;
+        for (No* vertice : grafo->get_lista_adj()) {
+            if (vertice->get_id() == no1) {
+                vertice->adicionar_aresta(aresta);
+                no1_encontrado = true;
+            }
+            if (vertice->get_id() == no2) {
+                vertice->adicionar_aresta(aresta);
+                no2_encontrado = true;
+            }
+        }
+
+        if (!no1_encontrado || !no2_encontrado) {
+            cerr << "Erro: vértice " << no1 << " ou " << no2 << " não encontrado na lista de vértices." << endl;
+            delete aresta;
+            delete grafo;
+            return nullptr;
         }
     }
 

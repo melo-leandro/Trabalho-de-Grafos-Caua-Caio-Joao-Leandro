@@ -12,6 +12,16 @@ public:
     No(char id, int peso);
     ~No();
 
+    char get_id();
+    void set_id(char id);
+
+    int get_peso();
+    void set_peso(int peso);
+
+    vector<Aresta*> get_arestas();
+    void adicionar_aresta(Aresta* aresta);
+
+private:
     char id;
     int peso;
     vector<Aresta*> arestas;

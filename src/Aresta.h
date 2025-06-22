@@ -7,6 +7,16 @@ public:
     Aresta(char id_origem, char id_destino, int peso);
     ~Aresta();
 
+    char get_id_origem();
+    void set_id_origem(char id);
+    
+    char get_id_destino();
+    void set_id_destino(char id);
+    
+    int get_peso();
+    void set_peso(int p);
+
+private:
     char id_origem;
     char id_destino;
     int peso;
