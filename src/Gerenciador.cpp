@@ -51,7 +51,9 @@ void Gerenciador::comandos(Grafo* grafo) {
             char id_no_1 = get_id_entrada();
             char id_no_2 = get_id_entrada();
             vector<char> caminho_minimo_dijkstra = grafo->caminho_minimo_dijkstra(id_no_1,id_no_2);
-            cout<<"Metodo de impressao em tela nao implementado"<<endl<<endl;
+            for(char id : caminho_minimo_dijkstra) {
+                cout << id << endl;
+            }
 
             if(pergunta_imprimir_arquivo("caminho_minimo_dijkstra.txt")) {
                 cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
@@ -277,7 +279,7 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
             return nullptr;
         }
 
-        Aresta* aresta = new Aresta(no1, no2, pond);
+        Aresta* aresta = new Aresta(no1, no2, pond, direcionado);
         
         bool no1_encontrado = false, no2_encontrado = false;
         for (No* vertice : grafo->get_lista_adj()) {

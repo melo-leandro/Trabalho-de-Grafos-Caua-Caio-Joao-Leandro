@@ -1,9 +1,10 @@
 #include "Aresta.h"
 
-Aresta::Aresta(char id_origem, char id_destino, int peso) {
+Aresta::Aresta(char id_origem, char id_destino, int peso, bool arco) {
     set_id_origem(id_origem);
     set_id_destino(id_destino);
     set_peso(peso);
+    set_arco(arco);
 }
 
 Aresta::~Aresta(){}
@@ -30,4 +31,12 @@ int Aresta::get_peso() {
 
 void Aresta::set_peso(int p) {
     this->peso = p;
+}
+
+bool Aresta::is_arco() {
+    return this->arco;
+}
+
+void Aresta::set_arco(bool a) {
+    this->arco = a;
 }

@@ -4,7 +4,7 @@
 using namespace std;
 class Aresta {
 public:
-    Aresta(char id_origem, char id_destino, int peso);
+    Aresta(char id_origem, char id_destino, int peso, bool arco);
     ~Aresta();
 
     char get_id_origem();
@@ -16,10 +16,14 @@ public:
     int get_peso();
     void set_peso(int p);
 
+    bool is_arco();
+    void set_arco(bool a);
+
 private:
     char id_origem;
     char id_destino;
     int peso;
+    bool arco;
 };
 
 #endif //ARESTA_H
