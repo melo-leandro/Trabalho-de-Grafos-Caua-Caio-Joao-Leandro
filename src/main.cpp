@@ -2,29 +2,28 @@
 #include "Gerenciador.h"
 using namespace std;
 
-int main(int argc, char *argv[])
-{
-    
-    Grafo* grafo = Gerenciador::carregar_informacoes_entrada(argv[1]);
-
-    //SEÇÃO DO CÓDIGO PARA TESTE -- REMOVER NA VERSÃO FINAL
+void imprimir_grafo(Grafo g) {
     for(No* no: grafo->get_lista_adj()) {
         cout << no->get_id() << "("<<  no->get_peso() << ") -> ";
         
         for(Aresta* aresta: no->get_arestas()){
             cout << "{"<< aresta->get_peso() << "} ";
             if(no->get_id() == aresta->get_id_origem())
-                cout << aresta->get_id_destino() << "(" << grafo->getNodeById(aresta->get_id_destino())->get_peso() << ") ";
+                cout << aresta->get_id_destino() << "(" << grafo->encontrar_no_por_id(aresta->get_id_destino())->get_peso() << ") ";
             else
-                cout << aresta->get_id_origem() << "(" << grafo->getNodeById(aresta->get_id_origem())->get_peso() << ") ";
+                cout << aresta->get_id_origem() << "(" << grafo->encontrar_no_por_id(aresta->get_id_origem())->get_peso() << ") ";
         }
         
         cout << endl;
     }
-    //FIM SEÇÃO DO CÓDIGO PARA TESTE -- REMOVER NA VERSÃO FINAL
+}
 
+int main(int argc, char *argv[])
+{
+    
+    Grafo* grafo = Gerenciador::carregar_informacoes_entrada(argv[1]);
 
-    // Gerenciador::comandos(grafo);
+    Gerenciador::comandos(grafo);
     
     delete grafo;
     return 0;
