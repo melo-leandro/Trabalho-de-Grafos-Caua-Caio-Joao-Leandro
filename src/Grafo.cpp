@@ -80,50 +80,57 @@ vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
 vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
 
     No* no_a = this->encontrar_no_por_id(id_no_a);
-    map<char,int> distancia;
-    map<char, char> predecessor = {{id_no_a, id_no_a}};
-    
+    if(!no_a) return {};
+
+    map<char,int> distancia = {};
+    map<char, char> predecessor = {};
     vector<No*> livres = lista_adj;
-    livres.erase(remove(livres.begin(), livres.end(), no_a), livres.end());
 
     for(No* no : this->get_lista_adj())
         distancia[no->get_id()] = INT_MAX;
     distancia[id_no_a] = 0;
+    predecessor[id_no_a] = id_no_a;
 
-    for(Aresta* aresta : no_a->get_arestas())
-        if(aresta->get_id_origem() == id_no_a)
-            distancia[aresta->get_id_destino()] = aresta->get_peso();
-
+    char antecessor = id_no_a;
     while(!livres.empty()) {
         No* mais_prox= nullptr;
         int menor_dist = INT_MAX;
         for(No* no : livres) {
             if(distancia[no->get_id()] < menor_dist) {
-                mais_prox= no;
+                mais_prox = no;
                 menor_dist = distancia[no->get_id()];
             }
         }
 
         if(!mais_prox)
-            break;
+        break;
 
         livres.erase(remove(livres.begin(), livres.end(), mais_prox), livres.end());
-        
+
         for(Aresta* aresta : mais_prox->get_arestas())
             if(aresta->get_id_origem() == mais_prox->get_id()) {
                 int nova_distancia = distancia[mais_prox->get_id()] + aresta->get_peso();
                 char id_sucessor = aresta->get_id_destino();
                 if(nova_distancia < distancia[id_sucessor]) {
-                    // livres.push_back(this->encontrar_no_por_id(id_sucessor));
                     distancia[id_sucessor] = nova_distancia;
                     predecessor[id_sucessor] = mais_prox->get_id();
+                    livres.push_back(encontrar_no_por_id(id_sucessor));
                 }
             }
     }
 
-    for(auto it : predecessor) {
-        cout << it.first << " : " << it.second << endl;
-    }
+
+        cout << "PREDECESSORES:" << endl;
+        for(auto it : predecessor)
+            cout << it.first << " : " << it.second << endl;
+
+        cout << "DISTANCIAS POS:" << endl;
+        for(auto it : distancia)
+            cout << it.first << " : " << it.second << endl;
+
+    // for(auto it : predecessor) {
+    //     cout << it.first << " : " << it.second << endl;
+    // }
 
     // char atual = id_no_b;
     // vector<char> caminho = {};
