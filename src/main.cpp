@@ -2,7 +2,7 @@
 #include "Gerenciador.h"
 using namespace std;
 
-void imprimir_grafo(Grafo g) {
+void imprimir_grafo(Grafo* grafo) {
     for(No* no: grafo->get_lista_adj()) {
         cout << no->get_id() << "("<<  no->get_peso() << ") -> ";
         
