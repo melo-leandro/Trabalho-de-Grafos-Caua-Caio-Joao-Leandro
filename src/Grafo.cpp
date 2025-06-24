@@ -119,28 +119,17 @@ vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
             }
     }
 
+    char atual = id_no_b;
+    vector<char> caminho = {};
+    while(atual != id_no_a) {
+        caminho.push_back(atual);
+        atual = predecessor[atual];
+    }
+    caminho.push_back(id_no_a);
 
-        cout << "PREDECESSORES:" << endl;
-        for(auto it : predecessor)
-            cout << it.first << " : " << it.second << endl;
+    reverse(caminho.begin(), caminho.end());
 
-        cout << "DISTANCIAS POS:" << endl;
-        for(auto it : distancia)
-            cout << it.first << " : " << it.second << endl;
-
-    // for(auto it : predecessor) {
-    //     cout << it.first << " : " << it.second << endl;
-    // }
-
-    // char atual = id_no_b;
-    // vector<char> caminho = {};
-    // while(atual != id_no_a) {
-    //     cout << atual << endl;
-    //     caminho.push_back(atual);
-    //     atual = predecessor[atual];
-    // }
-
-    return {};
+    return caminho;
 }
 
 vector<char> Grafo::caminho_minimo_floyd(char id_no, char id_no_b) {

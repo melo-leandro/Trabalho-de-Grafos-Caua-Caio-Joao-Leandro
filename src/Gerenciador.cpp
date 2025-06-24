@@ -42,7 +42,7 @@ void Gerenciador::comandos(Grafo* grafo) {
                 cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
             }
 
-;
+
             break;
         }
 
@@ -77,6 +77,7 @@ void Gerenciador::comandos(Grafo* grafo) {
 
             break;
         }
+
         case 'e': {
 
             int tam;
@@ -151,6 +152,7 @@ void Gerenciador::comandos(Grafo* grafo) {
 
             break;
         }
+
         case 'i': {
 
             vector<char> articulacao = grafo->vertices_de_articulacao();
@@ -166,6 +168,7 @@ void Gerenciador::comandos(Grafo* grafo) {
         case '0': {
             exit(0);
         }
+        
         default: {
             cout<<"Opção inválida"<<endl;
         }
