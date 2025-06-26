@@ -279,7 +279,8 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
             return nullptr;
         }
 
-        Aresta* aresta = new Aresta(no1, no2, pond, direcionado);
+        Aresta* aresta = new Aresta(no2, pond);
+        Aresta* aresta_inversa = new Aresta(no1, pond);
         
         bool no1_encontrado = false, no2_encontrado = false;
         for (No* vertice : grafo->get_lista_adj()) {
@@ -287,8 +288,8 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
                 vertice->adicionar_aresta(aresta);
                 no1_encontrado = true;
             }
-            if (vertice->get_id() == no2) {
-                vertice->adicionar_aresta(aresta);
+            if (!direcionado && vertice->get_id() == no2) {
+                vertice->adicionar_aresta(aresta_inversa);
                 no2_encontrado = true;
             }
         }
