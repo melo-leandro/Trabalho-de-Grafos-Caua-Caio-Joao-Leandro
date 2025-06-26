@@ -276,6 +276,9 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
     char no1, no2;
     int pond = 1;
     while(arquivo >> no1 >> no2) {
+        if(!grafo->encontrar_no_por_id(no1) || !grafo->encontrar_no_por_id(no2))
+            continue;
+        
         if (pond_arestas && !(arquivo >> pond)) {
             cerr << "Erro ao ler o peso da aresta entre " << no1 << " e " << no2 << endl;
             delete grafo;
@@ -285,25 +288,14 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
         Aresta* aresta = new Aresta(no2, pond);
         Aresta* aresta_inversa = new Aresta(no1, pond);
         
-        bool no1_encontrado = false, no2_encontrado = false;
         for (No* vertice : grafo->get_lista_adj()) {
             if (vertice->get_id() == no1) {
                 vertice->adicionar_aresta(aresta);
-                no1_encontrado = true;
             }
             if (!direcionado && vertice->get_id() == no2) {
                 vertice->adicionar_aresta(aresta_inversa);
-                no2_encontrado = true;
             }
         }
-
-        if (!no1_encontrado || !no2_encontrado) {
-            cerr << "Erro: vértice " << no1 << " ou " << no2 << " não encontrado na lista de vértices." << endl;
-            delete aresta;
-            delete grafo;
-            return nullptr;
-        }
     }
-
     return grafo;
 }

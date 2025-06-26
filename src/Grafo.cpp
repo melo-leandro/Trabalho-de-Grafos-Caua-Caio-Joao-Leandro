@@ -91,7 +91,6 @@ vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
     distancia[id_no_a] = 0;
     predecessor[id_no_a] = id_no_a;
 
-    char antecessor = id_no_a;
     while(!livres.empty()) {
         No* mais_prox= nullptr;
         int menor_dist = INT_MAX;
@@ -107,16 +106,15 @@ vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
 
         livres.erase(remove(livres.begin(), livres.end(), mais_prox), livres.end());
 
-        for(Aresta* aresta : mais_prox->get_arestas())
-            if(aresta->get_id_origem() == mais_prox->get_id()) {
-                int nova_distancia = distancia[mais_prox->get_id()] + aresta->get_peso();
-                char id_sucessor = aresta->get_id_destino();
-                if(nova_distancia < distancia[id_sucessor]) {
-                    distancia[id_sucessor] = nova_distancia;
-                    predecessor[id_sucessor] = mais_prox->get_id();
-                    livres.push_back(encontrar_no_por_id(id_sucessor));
-                }
+        for(Aresta* aresta : mais_prox->get_arestas()) {
+            int nova_distancia = distancia[mais_prox->get_id()] + aresta->get_peso();
+            char id_sucessor = aresta->get_id_destino();
+            if(nova_distancia < distancia[id_sucessor]) {
+                distancia[id_sucessor] = nova_distancia;
+                predecessor[id_sucessor] = mais_prox->get_id();
+                livres.push_back(encontrar_no_por_id(id_sucessor));
             }
+        }
     }
 
     char atual = id_no_b;
@@ -130,6 +128,7 @@ vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
     reverse(caminho.begin(), caminho.end());
 
     return caminho;
+
 }
 
 vector<char> Grafo::caminho_minimo_floyd(char id_no, char id_no_b) {
