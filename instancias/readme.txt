@@ -1,4 +1,9 @@
-Orientações de formado das instâncias:
+Nomeação das instâncias:
+g_<ordem do grafo>_<densidade de arestas>_<in_direcionado>_<in_orientado_aresta>_<#>.txt
+g_5_0.40_0_0_0.txt
+
+
+Formado das instâncias:
 
 <direcionado> <ponderado_aresta> <ponderado_vertice>
 <#_vertices>

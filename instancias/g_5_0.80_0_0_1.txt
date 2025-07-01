@@ -1,0 +1,15 @@
+0 0 0
+5
+c
+d
+a
+b
+e
+e b
+c e
+b a
+a d
+d e
+c a
+c d
+d a

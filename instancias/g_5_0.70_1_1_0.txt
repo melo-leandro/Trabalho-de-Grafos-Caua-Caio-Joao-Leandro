@@ -1,0 +1,15 @@
+1 1 0
+5
+e
+a
+b
+d
+c
+d a 30
+e c 9
+c d 8
+a d 30
+e b 27
+d e 47
+c a 24
+e a 25
