@@ -29,9 +29,12 @@ class Grafo {
         vector<char> periferia(); // h 4
         vector<char> vertices_de_articulacao(); // i
 
+        //Funções auxiliares
         No* encontrar_no_por_id(char id);
+        pair<vector<char>, int> auxiliar_dijkstra(char id_no_a, char id_no_b);
         int distancia(char id_no_a, char id_no_b);
   
+        //Getters e Setters
         bool is_direcionado();
         void set_direcionado(bool dir);
         

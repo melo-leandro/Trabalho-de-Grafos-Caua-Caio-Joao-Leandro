@@ -21,6 +21,62 @@ No* Grafo::encontrar_no_por_id(char id) {
     return nullptr;
 }
 
+//Função criada para encontrar o caminho mínimo e calcular a distância simultâneamente
+pair<vector<char>, int> Grafo::auxiliar_dijkstra(char id_no_a, char id_no_b) {
+
+    No* no_a = this->encontrar_no_por_id(id_no_a);
+    No* no_b = this->encontrar_no_por_id(id_no_b);
+    if(!no_a || !no_b) return {};
+
+    map<char,int> distancia = {};
+    map<char, char> predecessor = {};
+    vector<No*> livres = lista_adj;
+
+    for(No* no : this->get_lista_adj())
+        distancia[no->get_id()] = INT_MAX;
+    distancia[id_no_a] = 0;
+    predecessor[id_no_a] = id_no_a;
+
+    while(!livres.empty()) {
+        No* mais_prox= nullptr;
+        int menor_dist = INT_MAX;
+        for(No* no : livres) {
+            if(distancia[no->get_id()] < menor_dist) {
+                mais_prox = no;
+                menor_dist = distancia[no->get_id()];
+            }
+        }
+
+        if(!mais_prox)
+        break;
+
+        livres.erase(remove(livres.begin(), livres.end(), mais_prox), livres.end());
+
+        for(Aresta* aresta : mais_prox->get_arestas()) {
+            int nova_distancia = distancia[mais_prox->get_id()] + aresta->get_peso();
+            char id_sucessor = aresta->get_id_destino();
+            if(nova_distancia < distancia[id_sucessor]) {
+                distancia[id_sucessor] = nova_distancia;
+                predecessor[id_sucessor] = mais_prox->get_id();
+                livres.push_back(encontrar_no_por_id(id_sucessor));
+            }
+        }
+    }
+
+    char atual = id_no_b;
+    vector<char> caminho = {};
+    while(atual != id_no_a) {
+        caminho.push_back(atual);
+        if(predecessor.find(atual) == predecessor.end()) {
+            return {};
+        }
+        atual = predecessor[atual];
+    }
+    caminho.push_back(id_no_a);
+    reverse(caminho.begin(), caminho.end());
+
+    return {caminho, distancia[id_no_b]};
+}
 
 Grafo::~Grafo() {
     
@@ -78,58 +134,7 @@ vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
 }
 
 vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
-
-    No* no_a = this->encontrar_no_por_id(id_no_a);
-    No* no_b = this->encontrar_no_por_id(id_no_b);
-    if(!no_a || !no_b) return {};
-
-    map<char,int> distancia = {};
-    map<char, char> predecessor = {};
-    vector<No*> livres = lista_adj;
-
-    for(No* no : this->get_lista_adj())
-        distancia[no->get_id()] = INT_MAX;
-    distancia[id_no_a] = 0;
-    predecessor[id_no_a] = id_no_a;
-
-    while(!livres.empty()) {
-        No* mais_prox= nullptr;
-        int menor_dist = INT_MAX;
-        for(No* no : livres) {
-            if(distancia[no->get_id()] < menor_dist) {
-                mais_prox = no;
-                menor_dist = distancia[no->get_id()];
-            }
-        }
-
-        if(!mais_prox)
-        break;
-
-        livres.erase(remove(livres.begin(), livres.end(), mais_prox), livres.end());
-
-        for(Aresta* aresta : mais_prox->get_arestas()) {
-            int nova_distancia = distancia[mais_prox->get_id()] + aresta->get_peso();
-            char id_sucessor = aresta->get_id_destino();
-            if(nova_distancia < distancia[id_sucessor]) {
-                distancia[id_sucessor] = nova_distancia;
-                predecessor[id_sucessor] = mais_prox->get_id();
-                livres.push_back(encontrar_no_por_id(id_sucessor));
-            }
-        }
-    }
-
-    char atual = id_no_b;
-    vector<char> caminho = {};
-    while(atual != id_no_a) {
-        caminho.push_back(atual);
-        atual = predecessor[atual];
-    }
-    caminho.push_back(id_no_a);
-
-    reverse(caminho.begin(), caminho.end());
-
-    return caminho;
-
+    return auxiliar_dijkstra(id_no_a, id_no_b).first;
 }
 
 vector<char> Grafo::caminho_minimo_floyd(char id_no, char id_no_b) {
@@ -153,27 +158,7 @@ Grafo * Grafo::arvore_caminhamento_profundidade(char id_no) {
 }
 
 int Grafo::distancia(char id_no_a, char id_no_b) {
-    No* no_a = this->encontrar_no_por_id(id_no_a);
-    No* no_b = this->encontrar_no_por_id(id_no_b);
-    if(!no_a || !no_b) return -1;
-    if(id_no_a == id_no_b) return 0;
-
-    vector<char> caminho = caminho_minimo_dijkstra(id_no_a, id_no_b);
-    if(caminho.empty()) return -1;
-
-    int distancia_total = 0;
-    No* no_atual = no_a;
-    for(int i = 0; i < caminho.size() - 1; i++) {
-        char id_destino = caminho[i + 1];
-        for(Aresta* aresta : no_atual->get_arestas()) {
-            if(aresta->get_id_destino() == id_destino) {
-                distancia_total += aresta->get_peso();
-                no_atual = this->encontrar_no_por_id(id_destino);
-                break;
-            }
-        }
-    }
-    return distancia_total;
+    return auxiliar_dijkstra(id_no_a, id_no_b).second;
 }
 
 int Grafo::raio() {
