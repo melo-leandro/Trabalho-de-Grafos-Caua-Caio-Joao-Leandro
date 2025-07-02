@@ -80,7 +80,8 @@ vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
 vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
 
     No* no_a = this->encontrar_no_por_id(id_no_a);
-    if(!no_a) return {};
+    No* no_b = this->encontrar_no_por_id(id_no_b);
+    if(!no_a || !no_b) return {};
 
     map<char,int> distancia = {};
     map<char, char> predecessor = {};
@@ -149,6 +150,30 @@ Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
 Grafo * Grafo::arvore_caminhamento_profundidade(char id_no) {
     cout<<"Metodo nao implementado"<<endl;
     return nullptr;
+}
+
+int Grafo::distancia(char id_no_a, char id_no_b) {
+    No* no_a = this->encontrar_no_por_id(id_no_a);
+    No* no_b = this->encontrar_no_por_id(id_no_b);
+    if(!no_a || !no_b) return -1;
+    if(id_no_a == id_no_b) return 0;
+
+    vector<char> caminho = caminho_minimo_dijkstra(id_no_a, id_no_b);
+    if(caminho.empty()) return -1;
+
+    int distancia_total = 0;
+    No* no_atual = no_a;
+    for(int i = 0; i < caminho.size() - 1; i++) {
+        char id_destino = caminho[i + 1];
+        for(Aresta* aresta : no_atual->get_arestas()) {
+            if(aresta->get_id_destino() == id_destino) {
+                distancia_total += aresta->get_peso();
+                no_atual = this->encontrar_no_por_id(id_destino);
+                break;
+            }
+        }
+    }
+    return distancia_total;
 }
 
 int Grafo::raio() {

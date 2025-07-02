@@ -30,6 +30,7 @@ class Grafo {
         vector<char> vertices_de_articulacao(); // i
 
         No* encontrar_no_por_id(char id);
+        int distancia(char id_no_a, char id_no_b);
   
         bool is_direcionado();
         void set_direcionado(bool dir);
