@@ -137,9 +137,65 @@ vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
     return auxiliar_dijkstra(id_no_a, id_no_b).first;
 }
 
-vector<char> Grafo::caminho_minimo_floyd(char id_no, char id_no_b) {
-    cout<<"Metodo nao implementado"<<endl;
-    return {};
+vector<char> Grafo::caminho_minimo_floyd(char id_no_a, char id_no_b) {
+    // Mapeia id dos vértices para índices
+    vector<No*> nos = this->get_lista_adj();
+    int n = nos.size();
+    map<char, int> id2idx;
+    map<int, char> idx2id;
+    for (int i = 0; i < n; ++i) {
+        id2idx[nos[i]->get_id()] = i;
+        idx2id[i] = nos[i]->get_id();
+    }
+    if (id2idx.find(id_no_a) == id2idx.end() || id2idx.find(id_no_b) == id2idx.end()) {
+        cout << "Erro: vértice(s) não encontrado(s)." << endl;
+        return {};
+    }
+    // Inicializa matriz de distâncias e predecessores
+    vector<vector<int>> dist(n, vector<int>(n, INT_MAX/2));
+    vector<vector<int>> pred(n, vector<int>(n, -1));
+    for (int i = 0; i < n; ++i) {
+        dist[i][i] = 0;
+        pred[i][i] = i;
+    }
+    for (int i = 0; i < n; ++i) {
+        for (Aresta* aresta : nos[i]->get_arestas()) {
+            int j = id2idx[aresta->get_id_destino()];
+            dist[i][j] = aresta->get_peso();
+            pred[i][j] = i;
+        }
+    }
+    // Floyd-Warshall
+    for (int k = 0; k < n; ++k) {
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                if (dist[i][k] + dist[k][j] < dist[i][j]) {
+                    dist[i][j] = dist[i][k] + dist[k][j];
+                    pred[i][j] = pred[k][j];
+                }
+            }
+        }
+    }
+    int u = id2idx[id_no_a];
+    int v = id2idx[id_no_b];
+    if (dist[u][v] >= INT_MAX/2) {
+        cout << "Não existe caminho entre os vértices." << endl;
+        return {};
+    }
+    // Reconstrói caminho
+    vector<char> caminho;
+    int atual = v;
+    while (atual != u) {
+        caminho.push_back(idx2id[atual]);
+        atual = pred[u][atual];
+        if (atual == -1) {
+            cout << "Erro ao reconstruir caminho." << endl;
+            return {};
+        }
+    }
+    caminho.push_back(idx2id[u]);
+    reverse(caminho.begin(), caminho.end());
+    return caminho;
 }
 
 Grafo * Grafo::arvore_geradora_minima_prim(vector<char> ids_nos) {
