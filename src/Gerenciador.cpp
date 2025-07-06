@@ -5,6 +5,12 @@
 
 
 void Gerenciador::comandos(Grafo* grafo) {
+    cout << "Informações do grafo:" << endl;
+    cout << "Direcionado: " << (grafo->is_direcionado() ? "Sim" : "Nao") << endl;
+    cout << "Ponderado por aresta: " << (grafo->is_ponderado_aresta() ? "Sim" : "Nao") << endl;
+    cout << "Ponderado por vertice: " << (grafo->is_ponderado_vertice() ? "Sim" : "Nao") << endl;
+    cout << "Ordem do grafo: " << grafo->get_ordem() << endl;
+    
     cout<<"Digite uma das opcoes abaixo e pressione enter:"<<endl<<endl;
     cout<<"(a) Fecho transitivo direto de um no;"<<endl;
     cout<<"(b) Fecho transitivo indireto de um no;"<<endl;
@@ -106,7 +112,7 @@ void Gerenciador::comandos(Grafo* grafo) {
                 //Impressão em arquivo
                 string saida = "agm_prim.txt";
                 if(pergunta_imprimir_arquivo(saida)) {
-                    gerar_arquivo_saida_grafo(arvore_geradora_minima_prim, saida);
+                    gerar_arquivo_saida_grafo(arvore_geradora_minima_prim, saida, true);
                 }
 
                 delete arvore_geradora_minima_prim;
@@ -137,7 +143,7 @@ void Gerenciador::comandos(Grafo* grafo) {
                 //Impressão em arquivo
                 string saida = "agm_kruskal.txt";
                 if(pergunta_imprimir_arquivo(saida)) {
-                    gerar_arquivo_saida_grafo(arvore_geradora_minima_kruskal, saida);
+                    gerar_arquivo_saida_grafo(arvore_geradora_minima_kruskal, saida, true);
                 }
 
                 delete arvore_geradora_minima_kruskal;
@@ -171,7 +177,7 @@ void Gerenciador::comandos(Grafo* grafo) {
             //Impressão em arquivo
             string saida = "arvore_caminhamento_profundidade.txt";
             if(pergunta_imprimir_arquivo(saida)) {
-                gerar_arquivo_saida_grafo(arvore_caminhamento_profundidade, saida);
+                gerar_arquivo_saida_grafo(arvore_caminhamento_profundidade, saida, false);
             }
             delete arvore_caminhamento_profundidade;
             break;
@@ -353,11 +359,38 @@ void Gerenciador::imprimir_grafo(Grafo* grafo) {
     }
 }
 
-void Gerenciador::gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo) {
+void Gerenciador::gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo, bool imprimir_estrutura_grafo) {
     ofstream arquivo_saida("output/" + nome_arquivo);
     if (!arquivo_saida.is_open()) {
         cerr << "Erro ao abrir o arquivo: " << nome_arquivo << endl;
         return;
+    }
+
+    if(imprimir_estrutura_grafo){
+        
+        arquivo_saida << grafo->is_direcionado() << " " << grafo->is_ponderado_aresta() << " " << grafo->is_ponderado_vertice() << endl;
+        arquivo_saida << grafo->get_ordem() << endl;
+        
+        //Nó
+        for(No* no: grafo->get_lista_adj()) {
+            arquivo_saida << no->get_id();
+            if(grafo->is_ponderado_vertice()) {
+                arquivo_saida << " " << no->get_peso();
+            }
+            arquivo_saida << endl;
+        }
+
+        //Arestas
+        for(No* no: grafo->get_lista_adj()) {
+            for(Aresta* aresta: no->get_arestas()) {
+                arquivo_saida << no->get_id() << " " << aresta->get_id_destino();
+                if(grafo->is_ponderado_aresta()) {
+                    arquivo_saida << " " << aresta->get_peso();
+                }
+                arquivo_saida << endl;
+            }
+        }
+        arquivo_saida << endl;
     }
 
     for(No* no: grafo->get_lista_adj()) {
@@ -371,7 +404,6 @@ void Gerenciador::gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo) {
     }
 
     arquivo_saida.close();
-    cout << "Arquivo " << nome_arquivo << " gerado com sucesso!" << endl;
 }
 
 void Gerenciador::gerar_arquivo_saida_vetor(vector<char> vetor, string nome_arquivo) {
@@ -385,8 +417,6 @@ void Gerenciador::gerar_arquivo_saida_vetor(vector<char> vetor, string nome_arqu
         arquivo_saida << vetor[i];
         if (i != vetor.size() - 1) arquivo_saida << ", ";
     }
-    arquivo_saida << endl;
-
+    
     arquivo_saida.close();
-    cout << "Arquivo " << nome_arquivo << " gerado com sucesso!" << endl;
 }
