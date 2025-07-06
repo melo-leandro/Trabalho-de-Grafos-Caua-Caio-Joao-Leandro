@@ -55,13 +55,14 @@ class Grafo {
         int distancia(char id_no_a, char id_no_b);
         int excentricidade(char id_no);
         map<char, int> todas_excentricidades();
-
-                
-    private:
+        
+        
+        private:
         bool in_direcionado;
         bool in_ponderado_vertice;
         bool in_ponderado_aresta;
         int ordem;
         vector<No*> lista_adj;
+        void dfs_util(char atual, std::map<char, bool>& visitado, Grafo* arvore, std::map<char, No*>& mapa_novos_nos);
 };
 #endif //GRAFO_H

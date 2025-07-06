@@ -204,9 +204,37 @@ Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
     return nullptr;
 }
 
-Grafo * Grafo::arvore_caminhamento_profundidade(char id_no) {
-    cout<<"Metodo nao implementado"<<endl;
-    return nullptr;
+void Grafo::dfs_util(char atual, std::map<char, bool>& visitado, Grafo* arvore, std::map<char, No*>& mapa_novos_nos) {
+    visitado[atual] = true;
+    No* no_atual = this->encontrar_no_por_id(atual);
+    for (Aresta* aresta : no_atual->get_arestas()) {
+        char vizinho = aresta->get_id_destino();
+        if (!visitado[vizinho]) {
+            mapa_novos_nos[atual]->adicionar_aresta(new Aresta(vizinho, aresta->get_peso()));
+            if (!this->is_direcionado()) {
+                mapa_novos_nos[vizinho]->adicionar_aresta(new Aresta(atual, aresta->get_peso()));
+            }
+            this->dfs_util(vizinho, visitado, arvore, mapa_novos_nos);
+        }
+    }
+}
+
+Grafo* Grafo::arvore_caminhamento_profundidade(char id_no) {
+    No* no_inicial = encontrar_no_por_id(id_no);
+    if (!no_inicial) {
+        cout << "Vertice nao encontrado." << endl;
+        return nullptr;
+    }
+    Grafo* arvore = new Grafo(this->is_direcionado(), this->is_ponderado_aresta(), this->is_ponderado_vertice(), this->get_ordem());
+    std::map<char, No*> mapa_novos_nos;
+    for (No* no : this->get_lista_adj()) {
+        No* novo_no = new No(no->get_id(), no->get_peso());
+        arvore->adicionar_no(novo_no);
+        mapa_novos_nos[no->get_id()] = novo_no;
+    }
+    std::map<char, bool> visitado;
+    this->dfs_util(id_no, visitado, arvore, mapa_novos_nos);
+    return arvore;
 }
 
 int Grafo::distancia(char id_no_a, char id_no_b) {
