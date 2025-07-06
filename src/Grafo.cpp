@@ -145,7 +145,7 @@ vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
 
         char atual = item.first;
         int dist = item.second;
-        
+
         No* no_atual = encontrar_no_por_id(atual);
         if (!no_atual) continue;
 
@@ -154,10 +154,8 @@ vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
             if (!visitado[vizinho]) {
                 visitado[vizinho] = true;
                 fila_bfs.push({vizinho, dist + 1});
-
-                if (dist + 1 >= 2) {
+                if(dist + 1 > 1)
                     fecho.push_back(vizinho);
-                }
             }
         }
     }
