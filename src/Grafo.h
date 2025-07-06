@@ -64,5 +64,6 @@ class Grafo {
         bool in_ponderado_aresta;
         int ordem;
         vector<No*> lista_adj;
+        void dfs_util(char atual, std::map<char, bool>& visitado, Grafo* arvore, std::map<char, No*>& mapa_novos_nos);
 };
 #endif //GRAFO_H
