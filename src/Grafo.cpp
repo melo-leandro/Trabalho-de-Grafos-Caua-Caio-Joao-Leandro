@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Grafo::Grafo(bool dir, bool pond_vertices, bool pond_arestas, int ordem) {
+Grafo::Grafo(bool dir, bool pond_arestas, bool pond_vertices, int ordem) {
     set_direcionado(dir);
     set_ponderado_vertice(pond_vertices);
     set_ponderado_aresta(pond_arestas);
@@ -217,28 +217,92 @@ int Grafo::distancia(char id_no_a, char id_no_b) {
     return auxiliar_dijkstra(id_no_a, id_no_b).second;
 }
 
+map<char, int> Grafo::todas_excentricidades() {
+    map<char, int> resultado;
+    for (No* no : this->get_lista_adj()) {
+        resultado[no->get_id()] = excentricidade(no->get_id());
+    }
+    return resultado;
+}
+
+
+int Grafo::excentricidade(char id_no) {
+    No* no = this->encontrar_no_por_id(id_no);
+    if(!no) return INT_MAX;
+
+    int max_distancia = 0;
+    for(No* outro_no : this->get_lista_adj()) {
+        if(outro_no->get_id() != id_no) {
+            int dist = distancia(no->get_id(), outro_no->get_id());
+            if(dist > max_distancia) {
+                max_distancia = dist;
+            }
+        }
+    }
+    return max_distancia;
+}
+
 int Grafo::raio() {
-    cout<<"Metodo nao implementado"<<endl;
-    return 0;
+    int raio = INT_MAX;
+
+    for(No* no : this->get_lista_adj()) {
+        int excentricidade_atual = excentricidade(no->get_id());
+        if(excentricidade_atual == -1) {
+            continue;
+        }
+        if(excentricidade_atual < raio || raio == INT_MAX) {
+            raio = excentricidade_atual;
+        }
+    }
+    return raio;
 }
 
 int Grafo::diametro() {
-    cout<<"Metodo nao implementado"<<endl;
-    return 0;
+    int diametro = INT_MIN;
+
+    for(No* no : this->get_lista_adj()) {
+        int excentricidade_atual = excentricidade(no->get_id());
+        if(excentricidade_atual == -1) {
+            continue;
+        }
+        if(excentricidade_atual > diametro || diametro == INT_MIN) {
+            diametro = excentricidade_atual;
+        }
+    }
+    return diametro;
 }
 
 vector<char> Grafo::centro() {
-    cout<<"Metodo nao implementado"<<endl;
-    return {};
+    int raio = this->raio();
+    if(raio == INT_MAX) {
+        return {};
+    }
+
+    vector<char> centro;
+
+    for(No* no : this->get_lista_adj()) {
+        int excentricidade_atual = excentricidade(no->get_id());
+        if(excentricidade_atual == raio) {
+            centro.push_back(no->get_id());
+        }
+    }
+    return centro;
 }
 
 vector<char> Grafo::periferia() {
-    cout<<"Metodo nao implementado"<<endl;
-    return {};
-}
+    int diametro = this->diametro();
+    if(diametro == INT_MIN) {
+        return {};
+    }
 
-vector<char> Grafo::vertices_de_articulacao() {
-    cout<<"Metodo nao implementado"<<endl;
-    return {};
+    vector<char> periferia;
+
+    for(No* no : this->get_lista_adj()) {
+        int excentricidade_atual = excentricidade(no->get_id());
+        if(excentricidade_atual == diametro) {
+            periferia.push_back(no->get_id());
+        }
+    }
+    return periferia;
 }
 
