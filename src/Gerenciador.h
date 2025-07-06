@@ -16,6 +16,7 @@ public:
     static void imprimir_grafo(Grafo* grafo);
     // Funções para imprimir em arquivo
     static void gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo);
+    static void gerar_arquivo_saida_vetor(vector<char> vetor, string nome_arquivo);
 };
 
 
