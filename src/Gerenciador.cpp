@@ -139,23 +139,12 @@ void Gerenciador::comandos(Grafo* grafo) {
 
             char id_no = get_id_entrada();
             Grafo* arvore_caminhamento_profundidade = grafo->arvore_caminhamento_profundidade(id_no);
-            if (arvore_caminhamento_profundidade) {
-                for (No* no : arvore_caminhamento_profundidade->get_lista_adj()) {
-                    cout << no->get_id() << ": ";
-                    vector<Aresta*> arestas = no->get_arestas();
-                    for (size_t i = 0; i < arestas.size(); ++i) {
-                        cout << arestas[i]->get_id_destino();
-                        if (i != arestas.size() - 1) cout << " -> ";
-                    }
-                    cout << endl;
-                }
-                cout << endl;
-            } else {
-                cout << "Nao foi possivel construir a arvore de caminhamento em profundidade." << endl;
-            }
+            cout<<"Metodo de impressao em tela nao implementado"<<endl<<endl;
+
             if(pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt")) {
                 cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
             }
+
             delete arvore_caminhamento_profundidade;
             break;
         }
