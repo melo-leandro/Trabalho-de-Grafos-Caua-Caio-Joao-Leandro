@@ -14,6 +14,8 @@ public:
     static bool pergunta_imprimir_arquivo(string nome_arquivo);
     static Grafo* carregar_informacoes_entrada(string nome_arquivo);
     static void imprimir_grafo(Grafo* grafo);
+    // Funções para imprimir em arquivo
+    static void gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo);
 };
 
 

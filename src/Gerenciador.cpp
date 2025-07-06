@@ -126,8 +126,9 @@ void Gerenciador::comandos(Grafo* grafo) {
                 if(arvore_geradora_minima_kruskal) {
                     imprimir_grafo(arvore_geradora_minima_kruskal);
                 }
-                if(pergunta_imprimir_arquivo("agm_kruskal.txt")) {
-                    cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
+                string saida = "agm_kruskal.txt";
+                if(pergunta_imprimir_arquivo(saida)) {
+                    gerar_arquivo_saida_grafo(arvore_geradora_minima_kruskal, saida);
                 }
 
                 delete arvore_geradora_minima_kruskal;
@@ -338,4 +339,23 @@ void Gerenciador::imprimir_grafo(Grafo* grafo) {
         
         cout << endl;
     }
+}
+
+void Gerenciador::gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo) {
+    ofstream arquivo_saida("output/" + nome_arquivo);
+    if (!arquivo_saida.is_open()) {
+        cerr << "Erro ao abrir o arquivo: " << nome_arquivo << endl;
+        return;
+    }
+
+    for(No* no: grafo->get_lista_adj()) {
+        arquivo_saida << no->get_id() << ": ";
+        
+        for(Aresta* aresta: no->get_arestas()){
+            arquivo_saida << aresta->get_id_destino() << ((aresta != no->get_arestas().back())? " -> ": "\n");
+        }
+    }
+
+    arquivo_saida.close();
+    cout << "Arquivo " << nome_arquivo << " gerado com sucesso!" << endl;
 }
