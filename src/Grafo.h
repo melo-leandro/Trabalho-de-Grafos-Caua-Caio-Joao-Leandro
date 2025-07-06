@@ -33,6 +33,8 @@ class Grafo {
         No* encontrar_no_por_id(char id);
         pair<vector<char>, int> auxiliar_dijkstra(char id_no_a, char id_no_b);
         int distancia(char id_no_a, char id_no_b);
+        char achar_rep(char x);
+        void unir_sets(char x, char y);
   
         //Getters e Setters
         bool is_direcionado();

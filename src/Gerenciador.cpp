@@ -110,7 +110,8 @@ void Gerenciador::comandos(Grafo* grafo) {
         }
 
         case 'f': {
-
+            
+            imprimir_grafo(grafo);
             int tam;
             cout<<"Digite o tamanho do subconjunto: ";
             cin>>tam;
@@ -119,8 +120,9 @@ void Gerenciador::comandos(Grafo* grafo) {
 
                 vector<char> ids = get_conjunto_ids(grafo,tam);
                 Grafo* arvore_geradora_minima_kruskal = grafo->arvore_geradora_minima_kruskal(ids);
-                cout<<"Metodo de impressao em tela nao implementado"<<endl<<endl;
-
+                if(arvore_geradora_minima_kruskal) {
+                    imprimir_grafo(arvore_geradora_minima_kruskal);
+                }
                 if(pergunta_imprimir_arquivo("agm_kruskal.txt")) {
                     cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
                 }
@@ -304,4 +306,19 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
         }
     }
     return grafo;
+}
+
+void Gerenciador::imprimir_grafo(Grafo* grafo) {
+    for(No* no: grafo->get_lista_adj()) {
+        cout << no->get_id() << "("<<  no->get_peso() << ") -> ";
+        
+        for(Aresta* aresta: no->get_arestas()){
+            cout << "{"<< aresta->get_peso() << "} ";
+        
+            cout << aresta->get_id_destino() << "(" << grafo->encontrar_no_por_id(aresta->get_id_destino())->get_peso() << ") ";
+        
+        }
+        
+        cout << endl;
+    }
 }

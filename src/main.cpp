@@ -19,9 +19,9 @@ void imprimir_grafo(Grafo* grafo) {
 
 int main(int argc, char *argv[])
 {
-    
+    cout << "ENTROU MAIN" << endl;
     Grafo* grafo = Gerenciador::carregar_informacoes_entrada(argv[1]);
-
+    cout << "GRAFO CARREGADO" << endl;
     imprimir_grafo(grafo);
     Gerenciador::comandos(grafo);
     
