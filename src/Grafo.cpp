@@ -126,9 +126,50 @@ vector<char> Grafo::fecho_transitivo_direto(char id_no) {
 }
 
 vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
-    cout<<"Metodo nao implementado"<<endl;
-    return {};
+    vector<char> fecho;
+    queue<pair<char, int>> fila_bfs;
+    map<char, bool> visitado;
+
+    No* no_inicial = encontrar_no_por_id(id_no);
+    if (!no_inicial) {
+        cout << "Erro: vértice não encontrado." << endl;
+        return fecho;
+    }
+
+    fila_bfs.push({id_no, 0});
+    visitado[id_no] = true;
+
+    while (!fila_bfs.empty()) {
+        auto item = fila_bfs.front();
+        fila_bfs.pop();
+
+        char atual = item.first;
+        int dist = item.second;
+
+        No* no_atual = encontrar_no_por_id(atual);
+        if (!no_atual) continue;
+
+        for (Aresta* aresta : no_atual->get_arestas()) {
+            char vizinho = aresta->get_id_destino();
+            if (!visitado[vizinho]) {
+                visitado[vizinho] = true;
+                fila_bfs.push({vizinho, dist + 1});
+                if(dist + 1 > 1)
+                    fecho.push_back(vizinho);
+            }
+        }
+    }
+
+    sort(fecho.begin(), fecho.end());
+
+    if (fecho.empty()) {
+        cout << "Erro: não há fecho transitivo indireto." << endl;
+    }
+
+    return fecho;
 }
+
+
 
 vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
     return auxiliar_dijkstra(id_no_a, id_no_b).first;
