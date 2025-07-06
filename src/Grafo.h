@@ -8,6 +8,7 @@
 #include "No.h"
 #include <iostream>
 #include <vector>
+#include <map>
 
 
 using namespace std;
@@ -44,14 +45,7 @@ class Grafo {
         vector<No*> get_lista_adj();
         
         void adicionar_no(No* no);
-                
-    private:
-        bool in_direcionado;
-        bool in_ponderado_vertice;
-        bool in_ponderado_aresta;
-        int ordem;
-        vector<No*> lista_adj;
-        
+
         // Mapa para armazenar as excentricidades de cada nó
         map<char, int> excentricidades;
         
@@ -61,5 +55,13 @@ class Grafo {
         int distancia(char id_no_a, char id_no_b);
         int excentricidade(char id_no);
         map<char, int> todas_excentricidades();
+
+                
+    private:
+        bool in_direcionado;
+        bool in_ponderado_vertice;
+        bool in_ponderado_aresta;
+        int ordem;
+        vector<No*> lista_adj;
 };
 #endif //GRAFO_H
