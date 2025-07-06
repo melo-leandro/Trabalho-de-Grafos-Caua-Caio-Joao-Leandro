@@ -184,15 +184,12 @@ void Gerenciador::comandos(Grafo* grafo) {
         }
 
         case 'h': {
-            cout << "Raio: " << grafo->raio() << endl;
-            cout << "Diametro: " << grafo->diametro() << endl;
+            int raio = grafo->raio();
+            int diametro = grafo->diametro();
+            cout << "Raio: " << raio << endl;
+            cout << "Diametro: " << diametro << endl;
             vector<char> centro = grafo->centro();
             vector<char> periferia = grafo->periferia();
-
-            cout << "Excentricidade: " << endl;
-            for (No* no : grafo->get_lista_adj()) {
-                cout << no->get_id() << ": " << grafo->excentricidade(no->get_id()) << endl;
-            }  
 
             cout << "Centro: ";
             for (char id : centro) {
@@ -205,8 +202,27 @@ void Gerenciador::comandos(Grafo* grafo) {
             }
             cout << endl;
 
-            if(pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt")) {
-                cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
+            if(pergunta_imprimir_arquivo("raio_diametro_centro_periferia.txt")) {
+
+                ofstream arquivo_saida("output/raio_diametro_centro_periferia.txt");
+                if (!arquivo_saida.is_open()) {
+                    cerr << "Erro ao abrir o arquivo: raio_diametro_centro_periferia.txt" << endl;
+                    return;
+                }
+
+                cout << raio << endl;
+                cout << diametro << endl;
+                for (size_t i = 0; i < centro.size(); ++i) {
+                    arquivo_saida << centro[i];
+                    if (i != centro.size() - 1) arquivo_saida << ", ";
+                }
+                arquivo_saida << endl;
+                for (size_t i = 0; i < periferia.size(); ++i) {
+                    arquivo_saida << periferia[i];
+                    if (i != periferia.size() - 1) arquivo_saida << ", ";
+                }
+                
+                arquivo_saida.close();
             }
 
             break;
