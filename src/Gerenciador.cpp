@@ -91,8 +91,9 @@ void Gerenciador::comandos(Grafo* grafo) {
             } else {
                 cout << "Nao existe caminho entre os vertices." << endl << endl;
             }
-            if(pergunta_imprimir_arquivo("caminho_minimo_floyd.txt")) {
-                cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
+            string saida = "caminho_minimo_floyd.txt";
+            if(pergunta_imprimir_arquivo(saida)) {
+                gerar_arquivo_saida_vetor(caminho_minimo_floyd, saida);
             }
             break;
         }
@@ -207,14 +208,14 @@ void Gerenciador::comandos(Grafo* grafo) {
 
             if(pergunta_imprimir_arquivo("raio_diametro_centro_periferia.txt")) {
 
-                ofstream arquivo_saida("output/raio_diametro_centro_periferia.txt");
+                ofstream arquivo_saida("src/output/raio_diametro_centro_periferia.txt");
                 if (!arquivo_saida.is_open()) {
                     cerr << "Erro ao abrir o arquivo: raio_diametro_centro_periferia.txt" << endl;
                     return;
                 }
 
-                cout << raio << endl;
-                cout << diametro << endl;
+                arquivo_saida << raio << endl;
+                arquivo_saida << diametro << endl;
                 for (size_t i = 0; i < centro.size(); ++i) {
                     arquivo_saida << centro[i];
                     if (i != centro.size() - 1) arquivo_saida << ", ";
@@ -389,7 +390,7 @@ void Gerenciador::imprimir_grafo(Grafo* grafo) {
 }
 
 void Gerenciador::gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo, bool imprimir_estrutura_grafo) {
-    ofstream arquivo_saida("output/" + nome_arquivo);
+    ofstream arquivo_saida("src/output/" + nome_arquivo);
     if (!arquivo_saida.is_open()) {
         cerr << "Erro ao abrir o arquivo: " << nome_arquivo << endl;
         return;
@@ -436,7 +437,7 @@ void Gerenciador::gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo, b
 }
 
 void Gerenciador::gerar_arquivo_saida_vetor(vector<char> vetor, string nome_arquivo) {
-    ofstream arquivo_saida("output/" + nome_arquivo);
+    ofstream arquivo_saida("src/output/" + nome_arquivo);
     if (!arquivo_saida.is_open()) {
         cerr << "Erro ao abrir o arquivo: " << nome_arquivo << endl;
         return;
