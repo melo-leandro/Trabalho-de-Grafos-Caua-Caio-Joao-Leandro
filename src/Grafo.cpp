@@ -551,21 +551,33 @@ Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
     }
     
     //Árvore Geradora Mínima
-    Grafo* AGM = new Grafo(false, is_ponderado_vertice(), is_ponderado_aresta(), ids_nos.size());
+    Grafo* AGM = new Grafo(false, true, is_ponderado_vertice(), ids_nos.size());
 
-    vector<Aresta*> lista_arestas;
+    // Primeiro, adiciona todos os nós na AGM
     for(char no: ids_nos){
         No* node = this->encontrar_no_por_id(no);
-        if(node != nullptr){
-            for(Aresta* aresta: node->get_arestas())
-            if (node->get_id() < aresta->get_id_destino()) {
-                lista_arestas.push_back(aresta);
-            }
+        if(node){
             AGM->adicionar_no(new No(node->get_id(), node->get_peso()));
         } else {
             cout << "Erro: Nó " << no << " não encontrado no grafo." << endl;
             delete AGM;
             return nullptr;
+        }
+    }
+
+    vector<Aresta*> lista_arestas;
+    for(int i = 0; i < ids_nos.size(); i++){
+        No* node = this->encontrar_no_por_id(ids_nos[i]);
+        if(node){
+            for(Aresta* aresta: node->get_arestas()){
+                char destino = aresta->get_id_destino();
+                for(int j = i + 1; j < ids_nos.size(); j++){
+                    if(ids_nos[j] == destino){
+                        lista_arestas.push_back(aresta);
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -576,34 +588,34 @@ Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
 
     //Método Union Find
     map<char, char> pai;
-    map<char, int> posicao;
+    map<char, int> rank_no;
 
     for(char id: ids_nos){
         pai[id] = id;
-        posicao[id] = 0;
+        rank_no[id] = 0;
     }
 
-    //Função find (lambda)
+    //Função find lambda
     function<char(char)> achar_rep = [&](char x) -> char {
         if(pai[x] != x)
             pai[x] = achar_rep(pai[x]);
         return pai[x];
     };
 
-    //Função union (lamdba)
+    //Função union lambda
     function<bool(char, char)> unir_grupos = [&](char x, char y) -> bool {
         char paiX = achar_rep(x);
         char paiY = achar_rep(y);
 
         if (paiX == paiY) return false;
 
-        if (posicao[paiX] < posicao[paiY]) {
+        if (rank_no[paiX] < rank_no[paiY]) {
             pai[paiX] = paiY;
-        } else if (posicao[paiX] > posicao[paiY]) {
+        } else if (rank_no[paiX] > rank_no[paiY]) {
             pai[paiY] = paiX;
         } else {
             pai[paiY] = paiX;
-            posicao[paiX]++;
+            rank_no[paiX]++;
         }
         return true;
     };
@@ -613,8 +625,8 @@ Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
         for(char id: ids_nos){
             No* no = this->encontrar_no_por_id(id);
             if(no != nullptr){
-                vector<Aresta*> a = no->get_arestas();
-                if(find(a.begin(), a.end(), aresta) != a.end()){
+                vector<Aresta*> arestas_no = no->get_arestas();
+                if(find(arestas_no.begin(), arestas_no.end(), aresta) != arestas_no.end()){
                     return no->get_id();
                 }
             }
@@ -622,12 +634,10 @@ Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
         return '\0'; 
     };
 
-
     //Algoritmo de Kruskal
     int contador = 0;
 
     for(Aresta* aresta: lista_arestas){
-
         char no_origem = acha_origem(aresta);
         if(no_origem == '\0') {
             cout << "Erro: Aresta não encontrada no grafo." << endl;
@@ -729,12 +739,15 @@ int Grafo::raio() {
 
     for(No* no : this->get_lista_adj()) {
         int excentricidade_atual = excentricidade(no->get_id());
-        if(excentricidade_atual == -1) {
+        if(excentricidade_atual == INT_MAX) {
             continue;
         }
         if(excentricidade_atual < raio || raio == INT_MAX) {
             raio = excentricidade_atual;
         }
+    }
+    if(raio == INT_MAX) {
+        return -1;
     }
     return raio;
 }
@@ -744,12 +757,15 @@ int Grafo::diametro() {
 
     for(No* no : this->get_lista_adj()) {
         int excentricidade_atual = excentricidade(no->get_id());
-        if(excentricidade_atual == -1) {
+        if(excentricidade_atual == INT_MAX) {
             continue;
         }
         if(excentricidade_atual > diametro || diametro == INT_MIN) {
             diametro = excentricidade_atual;
         }
+    }
+    if(diametro == INT_MIN || diametro == INT_MAX) {
+        return -1;
     }
     return diametro;
 }
