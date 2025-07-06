@@ -1,4 +1,5 @@
 #include "Grafo.h"
+#include <functional>
 #include <algorithm>
 #include <climits>
 #include <map>
@@ -204,8 +205,121 @@ Grafo * Grafo::arvore_geradora_minima_prim(vector<char> ids_nos) {
 }
 
 Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
-    cout<<"Metodo nao implementado"<<endl;
-    return nullptr;
+    if(!is_ponderado_aresta() || is_direcionado()){
+        cout << "Não é possível encontrar a AGM de um grafo direcionado ou não ponderado nas arestas" << endl;
+        return nullptr;
+    }
+    
+    //Árvore Geradora Mínima
+    Grafo* AGM = new Grafo(false, is_ponderado_vertice(), is_ponderado_aresta(), ids_nos.size());
+
+    vector<Aresta*> lista_arestas;
+    for(char no: ids_nos){
+        No* node = this->encontrar_no_por_id(no);
+        if(node != nullptr){
+            for(Aresta* aresta: node->get_arestas())
+            if (node->get_id() < aresta->get_id_destino()) {
+                lista_arestas.push_back(aresta);
+            }
+            AGM->adicionar_no(new No(node->get_id(), node->get_peso()));
+        } else {
+            cout << "Erro: Nó " << no << " não encontrado no grafo." << endl;
+            delete AGM;
+            return nullptr;
+        }
+    }
+
+    sort(lista_arestas.begin(), lista_arestas.end(),
+         [](Aresta* a, Aresta* b)
+            {return a->get_peso() < b->get_peso();}
+        );
+
+    //Método Union Find
+    map<char, char> pai;
+    map<char, int> posicao;
+
+    for(char id: ids_nos){
+        pai[id] = id;
+        posicao[id] = 0;
+    }
+
+    //Função find (lambda)
+    function<char(char)> achar_rep = [&](char x) -> char {
+        if(pai[x] != x)
+            pai[x] = achar_rep(pai[x]);
+        return pai[x];
+    };
+
+    //Função union (lamdba)
+    function<bool(char, char)> unir_grupos = [&](char x, char y) -> bool {
+        char paiX = achar_rep(x);
+        char paiY = achar_rep(y);
+
+        if (paiX == paiY) return false;
+
+        if (posicao[paiX] < posicao[paiY]) {
+            pai[paiX] = paiY;
+        } else if (posicao[paiX] > posicao[paiY]) {
+            pai[paiY] = paiX;
+        } else {
+            pai[paiY] = paiX;
+            posicao[paiX]++;
+        }
+        return true;
+    };
+
+    //Método para achar o id do nó de origem de uma aresta
+    function<char(Aresta*)> acha_origem = [&](Aresta* aresta) -> char {
+        for(char id: ids_nos){
+            No* no = this->encontrar_no_por_id(id);
+            if(no != nullptr){
+                vector<Aresta*> a = no->get_arestas();
+                if(find(a.begin(), a.end(), aresta) != a.end()){
+                    return no->get_id();
+                }
+            }
+        }
+        return '\0'; 
+    };
+
+
+    //Algoritmo de Kruskal
+    int contador = 0;
+
+    for(Aresta* aresta: lista_arestas){
+
+        char no_origem = acha_origem(aresta);
+        if(no_origem == '\0') {
+            cout << "Erro: Aresta não encontrada no grafo." << endl;
+            delete AGM;
+            return nullptr;
+        }
+
+        char no_destino = aresta->get_id_destino();
+
+        if(unir_grupos(no_origem, no_destino)){
+            No* no_origem_agm = AGM->encontrar_no_por_id(no_origem);
+            No* no_destino_agm = AGM->encontrar_no_por_id(no_destino);
+            
+            if(no_origem_agm != nullptr && no_destino_agm != nullptr){
+                no_origem_agm->adicionar_aresta(new Aresta(no_destino, aresta->get_peso()));
+                no_destino_agm->adicionar_aresta(new Aresta(no_origem, aresta->get_peso()));
+            }
+            contador++;
+            
+            if(contador == ids_nos.size() - 1){
+                break;
+            }
+        }
+    }
+
+    if(contador < ids_nos.size() - 1){
+        cout << "Não foi possível formar uma árvore geradora mínima - grafo desconexo" << endl;
+        delete AGM;
+        return nullptr;
+    }
+    
+    return AGM;
 }
 
 Grafo * Grafo::arvore_caminhamento_profundidade(char id_no) {
