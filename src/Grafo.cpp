@@ -385,12 +385,15 @@ int Grafo::raio() {
 
     for(No* no : this->get_lista_adj()) {
         int excentricidade_atual = excentricidade(no->get_id());
-        if(excentricidade_atual == -1) {
+        if(excentricidade_atual == INT_MAX) {
             continue;
         }
         if(excentricidade_atual < raio || raio == INT_MAX) {
             raio = excentricidade_atual;
         }
+    }
+    if(raio == INT_MAX) {
+        return -1;
     }
     return raio;
 }
@@ -400,12 +403,15 @@ int Grafo::diametro() {
 
     for(No* no : this->get_lista_adj()) {
         int excentricidade_atual = excentricidade(no->get_id());
-        if(excentricidade_atual == -1) {
+        if(excentricidade_atual == INT_MAX) {
             continue;
         }
         if(excentricidade_atual > diametro || diametro == INT_MIN) {
             diametro = excentricidade_atual;
         }
+    }
+    if(diametro == INT_MIN || diametro == INT_MAX) {
+        return -1;
     }
     return diametro;
 }

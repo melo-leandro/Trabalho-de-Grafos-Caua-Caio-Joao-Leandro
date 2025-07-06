@@ -167,12 +167,22 @@ void Gerenciador::comandos(Grafo* grafo) {
             cout << "Diametro: " << grafo->diametro() << endl;
             vector<char> centro = grafo->centro();
             vector<char> periferia = grafo->periferia();
+
+            cout << "Excentricidade: " << endl;
+            for (No* no : grafo->get_lista_adj()) {
+                cout << no->get_id() << ": " << grafo->excentricidade(no->get_id()) << endl;
+            }  
+
+            cout << "Centro: ";
             for (char id : centro) {
-                cout << "Centro: " << id << endl;
+                cout << id << "";
             }
+            cout << endl;
+            cout << "Periferia: ";
             for (char id : periferia) {
-                cout << "Periferia: " << id << endl;
+                cout << id << " ";
             }
+            cout << endl;
 
             if(pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt")) {
                 cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
