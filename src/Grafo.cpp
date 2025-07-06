@@ -121,8 +121,46 @@ void Grafo::adicionar_no(No* no){
 }
 
 vector<char> Grafo::fecho_transitivo_direto(char id_no) {
-    cout<<"Metodo nao implementado"<<endl;
-    return {};
+    vector<char> fecho;
+    map<char, bool> visitados;
+    queue<char> fila;
+
+    //Confere se existe o nó inicial
+    if(!encontrar_no_por_id(id_no)){
+        cout<<"Nó não encontrado"<<endl;
+        return fecho;
+    }
+
+    fila.push(id_no);
+    visitados[id_no] = true;
+
+    //Fila pra ver o fecho
+    while (!fila.empty()){
+        char atual = fila.front();
+        fila.pop();    
+        
+        //Coloca no fecho
+        if(atual !=id_no || fecho.empty()){
+            fecho.push_back(atual);
+        }
+
+        //Analiso vizinhos
+        No* no_atual = encontrar_no_por_id(atual);
+        
+        if(!no_atual){
+            continue;
+        }
+
+        for(Aresta* aresta: no_atual->get_arestas()){
+            char vizinho = aresta->get_id_destino();
+            if(!visitados[vizinho]){
+                visitados[vizinho] = true;
+                fila.push(vizinho);
+            }
+        }
+    }
+    
+    return fecho;
 }
 
 vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
@@ -237,8 +275,273 @@ vector<char> Grafo::caminho_minimo_floyd(char id_no_a, char id_no_b) {
 }
 
 Grafo * Grafo::arvore_geradora_minima_prim(vector<char> ids_nos) {
-    cout<<"Metodo nao implementado"<<endl;
-    return nullptr;
+    /*Grafo* agm = new Grafo(false, this->is_ponderado_aresta(), this->is_ponderado_vertice(), 0); 
+    
+    if(lista_adj.empty()){
+        cout<<"Subconjunto vazio"<<endl;
+        return nullptr;
+    }
+
+    if(!is_ponderado_aresta() || is_direcionado()){
+        cout << "Não é possível encontrar a AGM de um grafo direcionado ou não ponderado nas arestas" << endl;
+        return nullptr;
+    }
+
+    //Encontra a aresta de menor peso(u,v)
+    char u,v;
+    int menor_peso = INT_MAX;
+    for(No* no: lista_adj){
+        for(Aresta* aresta: no->get_arestas()){
+            if(aresta->get_peso() < menor_peso){
+                menor_peso = aresta->get_peso();
+                u = no->get_id();
+                v = aresta->get_id_destino();
+            }
+        }
+    }
+
+    agm->adicionar_no(new No(u, 0));
+    agm->adicionar_no(new No(v, 0));
+    agm->adicionar_aresta(u, v, menor_peso);
+
+    //Inicializa estruturas: nó mais próximo e custo mínimo
+    map<char, char> prox;
+    map<char, int> custo_min;
+    priority_queue<pair<int, char>, vector<pair<int, char>>, greater<>> heap;
+
+    //Preenche prox  e custo_min com u e v
+    for(No* no: lista_adj){
+        char i = no->get_id();
+        
+        if(i==u || i==v){
+            continue;
+        }
+
+        int c_iu = INT_MAX;
+        int c_iv = INT_MAX;
+
+        for(Aresta* aresta: no->get_arestas()){
+            if(aresta->get_id_destino() == u){
+                c_iu = aresta->get_peso();
+            }
+
+            if(aresta->get_id_destino() == v){
+                c_iv = aresta->get_peso();
+            }
+        }
+
+        if(c_iu < c_iv){
+            prox[i] = u;
+            custo_min[i] = c_iu;
+        }else{
+            prox[i] = v;
+            custo_min = c_iv;
+        }
+        heap.push({custo_min[i],i});
+
+        //Analisa os nós restantes
+        int contador = 0;
+        int n = lista_adj.size();
+
+        while(contador < n-2 && !heap.empty()){
+            auto[custo, j] = heap.top();
+            heap.pop();
+
+            if(prox[j] == '\0'){
+                continue;
+            }
+
+            if (!agm->encontrar_no_por_id(j)) {
+                agm->adicionar_no(new No(j, 0));
+            }
+
+            agm->adicionar_aresta(j, prox[j], custo_min[j]);
+
+            prox[j] = '\0';
+            contador++;
+
+            //Atualiza os vizinhos
+            No* no_j = encontrar_no_por_id(j);
+            
+            if(!no_j){
+                continue;
+            }
+
+            for(Aresta* aresta: no_j->get_arestas()){
+                char i = aresta->get_id_destino();
+                if(prox[i] != '\0' && aresta->get_peso() < custo_min[i]){
+                    prox[i] = j;
+                    custo_min[i] = aresta->get_peso();
+                    heap.push({custo_min[i], i});
+                }
+            }
+        }
+
+        return agm;
+    }*/
+    /*if(ids_nos.empty()){
+        cout<<"O subconjunto de nós é vazio"<<endl;
+        return nullptr;
+    }
+
+    if(!is_ponderado_aresta() || is_direcionado()){
+        cout << "Não é possível encontrar a AGM de um grafo direcionado ou não ponderado nas arestas" << endl;
+        return nullptr;
+    }
+
+    //Cria AGM
+    Grafo* agm = new Grafo(false, this->is_ponderado_aresta(), this->is_ponderado_vertice(), 0);
+    
+    //Crio estruturas com map pra facilitar o algoritmo(vou usar ordenação implícita por menor peso)
+    map<char, int> menor_peso;
+    map<char, char> predecessor;
+    map<char, bool> presente_agm;
+    priority_queue<pair<int, char>, vector<pair<int, char>>, greater<>> heap;
+
+    //Inicio todos os menores pesos como "infinitos"
+    for(No* no: lista_adj){
+        char id = no->get_id();
+        menor_peso[id] = INT_MAX;
+        predecessor[id] = '\0';
+        presente_agm[id] = false;
+    }
+
+    //Primeiro nó do subconjunto
+    char raiz = ids_nos[0];
+    menor_peso[raiz] = 0;
+    heap.push({0, raiz});
+
+    //Prim
+    while(!heap.empty()){
+        char u = heap.top().second;
+        heap.pop();
+
+        if(presente_agm[u]){
+            continue;
+        }
+
+        presente_agm[u] = true;
+
+        //Ponho o nó na Árvore geradora mínima, menos a raiz
+        if(predecessor[u] != '\0'){
+            No* no_pred = agm->encontrar_no_por_id(predecessor[u]);
+
+            if(!no_pred){
+                no_pred = new No(predecessor[u], 0);
+                agm->adicionar_no(no_pred);
+            }
+
+            no_pred->adicionar_aresta(new Aresta(u, menor_peso[u]));
+        }
+
+        //Analisa os vizinhos
+        No* no_u = encontrar_no_por_id(u);
+        if(!no_u){
+            continue;
+        }
+        
+        for(Aresta* aresta: no_u->get_arestas()){
+            char v = aresta->get_id_destino();
+            int peso = aresta->get_peso();
+
+            //Vejo se esse nó está no subconjunto
+            if(find(ids_nos.begin(), ids_nos.end(), v) == ids_nos.end()){
+                continue;
+            }
+
+            if(!presente_agm[v] && peso < menor_peso[v]){
+                menor_peso[v] = peso;
+                predecessor[v] = u;
+                heap.push({menor_peso, v});
+            }
+        }
+    }
+    
+    //Verifico a conexidade
+    for(char id: ids_nos){
+        if(!presente_agm[id]){
+            cout<<"Subconjunto não forma um grafo conexo"<<endl;
+            delete agm;
+            return nullptr; 
+        }
+    }
+
+    return agm;*/
+    // Cria um novo grafo para a AGM
+    Grafo* agm = new Grafo(false, this->is_ponderado_aresta(), this->is_ponderado_vertice(), 0);
+    
+    if (ids_nos.empty() || lista_adj.empty()) {
+        return agm;
+    }
+
+    // Estruturas auxiliares
+    map<char, int> chave;            // Menor peso para conectar à AGM
+    map<char, char> predecessor;     // Vértice de origem na AGM
+    map<char, bool> presente_agm;    // Indica se o vértice já está na AGM
+    priority_queue<pair<int, char>, vector<pair<int, char>>, greater<>> heap;
+
+    // Inicialização
+    for (No* no : lista_adj) {
+        char id = no->get_id();
+        chave[id] = INT_MAX;
+        predecessor[id] = '\0';
+        presente_agm[id] = false;
+    }
+
+    // Começa pelo primeiro nó do subconjunto
+    char raiz = ids_nos[0];
+    chave[raiz] = 0;
+    heap.push({0, raiz});
+
+    // Algoritmo de Prim
+    while (!heap.empty()) {
+        char u = heap.top().second;
+        heap.pop();
+
+        if (presente_agm[u]) continue;
+        presente_agm[u] = true;
+
+        // Adiciona o nó e aresta à AGM (exceto a raiz)
+        if (predecessor[u] != '\0') {
+            No* no_pred = agm->encontrar_no_por_id(predecessor[u]);
+            if (!no_pred) {
+                no_pred = new No(predecessor[u], 0);
+                agm->adicionar_no(no_pred);
+            }
+            no_pred->adicionar_aresta(new Aresta(u, chave[u]));
+        }
+
+        // Processa vizinhos
+        No* no_u = encontrar_no_por_id(u);
+        if (!no_u) continue;
+
+        for (Aresta* aresta : no_u->get_arestas()) {
+            char v = aresta->get_id_destino();
+            
+            // Verifica se v está no subconjunto de entrada
+            if (find(ids_nos.begin(), ids_nos.end(), v) == ids_nos.end()) {
+                continue;
+            }
+
+            int peso = aresta->get_peso();
+            if (!presente_agm[v] && peso < chave[v]) {
+                chave[v] = peso;
+                predecessor[v] = u;
+                heap.push({chave[v], v});
+            }
+        }
+    }
+
+    // Verifica se todos os nós do subconjunto foram conectados
+    for (char id : ids_nos) {
+        if (!presente_agm[id]) {
+            cout << "Erro: Subconjunto não forma um grafo conexo." << endl;
+            delete agm;
+            return nullptr;
+        }
+    }
+
+    return agm;
 }
 
 Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
