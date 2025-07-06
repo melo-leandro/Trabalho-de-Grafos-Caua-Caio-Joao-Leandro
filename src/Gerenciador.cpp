@@ -142,6 +142,9 @@ void Gerenciador::comandos(Grafo* grafo) {
                 }
                 //Impressão em arquivo
                 string saida = "agm_kruskal.txt";
+                if(!arvore_geradora_minima_kruskal) {
+                    break;
+                }
                 if(pergunta_imprimir_arquivo(saida)) {
                     gerar_arquivo_saida_grafo(arvore_geradora_minima_kruskal, saida, true);
                 }
