@@ -109,7 +109,7 @@ void Grafo::set_ponderado_aresta(bool p_aresta) {
 }
 
 int Grafo::get_ordem() {
-    return this->in_ponderado_aresta;
+    return this->ordem;
 }
 
 void Grafo::set_ordem(int ordem) {

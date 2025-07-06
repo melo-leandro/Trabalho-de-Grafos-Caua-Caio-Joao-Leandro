@@ -13,6 +13,7 @@ public:
     static vector<char> get_conjunto_ids(Grafo* grafo, int tam);
     static bool pergunta_imprimir_arquivo(string nome_arquivo);
     static Grafo* carregar_informacoes_entrada(string nome_arquivo);
+    static void imprimir_grafo(Grafo* grafo);
 };
 
 
