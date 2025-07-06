@@ -350,10 +350,12 @@ void Gerenciador::gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo) {
 
     for(No* no: grafo->get_lista_adj()) {
         arquivo_saida << no->get_id() << ": ";
-        
         for(Aresta* aresta: no->get_arestas()){
-            arquivo_saida << aresta->get_id_destino() << ((aresta != no->get_arestas().back())? " -> ": "\n");
+            arquivo_saida << aresta->get_id_destino();
+            if(aresta != no->get_arestas().back())
+                arquivo_saida << " -> ";
         }
+        arquivo_saida << endl;
     }
 
     arquivo_saida.close();
