@@ -343,7 +343,7 @@ Grafo * Grafo::arvore_geradora_minima_prim(vector<char> ids_nos) {
     // Verifica se todos os nós do subconjunto foram conectados
     for (char id : ids_nos) {
         if (!presente_agm[id]) {
-            cout << "Erro: Subconjunto não forma um grafo conexo." << endl;
+            cout << "Subconjunto não forma um grafo conexo." << endl;
             delete agm;
             return nullptr;
         }
