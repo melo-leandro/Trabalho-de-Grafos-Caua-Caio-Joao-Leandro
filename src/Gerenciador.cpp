@@ -1,6 +1,7 @@
 #include "Gerenciador.h"
 #include "No.h"
 #include <fstream>
+#include <sstream>
 
 
 void Gerenciador::comandos(Grafo* grafo) {
@@ -140,31 +141,38 @@ void Gerenciador::comandos(Grafo* grafo) {
 
             char id_no = get_id_entrada();
             Grafo* arvore_caminhamento_profundidade = grafo->arvore_caminhamento_profundidade(id_no);
-            cout<<"Metodo de impressao em tela nao implementado"<<endl<<endl;
-
+            if (arvore_caminhamento_profundidade) {
+                for (No* no : arvore_caminhamento_profundidade->get_lista_adj()) {
+                    cout << no->get_id() << ": ";
+                    vector<Aresta*> arestas = no->get_arestas();
+                    for (size_t i = 0; i < arestas.size(); ++i) {
+                        cout << arestas[i]->get_id_destino();
+                        if (i != arestas.size() - 1) cout << " -> ";
+                    }
+                    cout << endl;
+                }
+                cout << endl;
+            } else {
+                cout << "Nao foi possivel construir a arvore de caminhamento em profundidade." << endl;
+            }
             if(pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt")) {
                 cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
             }
-
             delete arvore_caminhamento_profundidade;
             break;
         }
 
         case 'h': {
-            vector<char> articulacao = grafo->vertices_de_articulacao();
-            cout<<"Metodo de impressao em tela nao implementado"<<endl<<endl;
-
-            if(pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt")) {
-                cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
+            cout << "Raio: " << grafo->raio() << endl;
+            cout << "Diametro: " << grafo->diametro() << endl;
+            vector<char> centro = grafo->centro();
+            vector<char> periferia = grafo->periferia();
+            for (char id : centro) {
+                cout << "Centro: " << id << endl;
             }
-
-            break;
-        }
-
-        case 'i': {
-
-            vector<char> articulacao = grafo->vertices_de_articulacao();
-            cout<<"Metodo de impressao em tela nao implementado"<<endl<<endl;
+            for (char id : periferia) {
+                cout << "Periferia: " << id << endl;
+            }
 
             if(pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt")) {
                 cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
@@ -250,27 +258,31 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
         return nullptr;
     }
 
-    bool direcionado, pond_vertices, pond_arestas;
-    arquivo >> direcionado >> pond_vertices >> pond_arestas;
+    bool direcionado, pond_arestas, pond_vertices;
+    arquivo >> direcionado >> pond_arestas >> pond_vertices;
 
     int ordem;
     arquivo >> ordem;
 
-    Grafo* grafo = new Grafo(direcionado, pond_vertices, pond_arestas, ordem);
+    Grafo* grafo = new Grafo(direcionado, pond_arestas, pond_vertices, ordem);
 
     //Ler os vértices
-    char id;
-    int peso;
+    string linha;
+    arquivo.ignore();
     for(int i = 0; i < ordem; i++){
-        arquivo >> id;
+        if(getline(arquivo, linha)) {
+            istringstream iss(linha);
+            char id;
+            int peso = 0;
 
-        if(pond_vertices)
-            arquivo >> peso;
-        else
-            peso = 0;
-        
-        No* no = new No(id, peso);
-        grafo->adicionar_no(no);
+            iss >> id;
+
+            if(pond_vertices)
+                iss >> peso;
+
+            No* no = new No(id, peso);
+            grafo->adicionar_no(no);
+        }
     }
 
     if (grafo->get_lista_adj().size() != ordem) {
@@ -283,11 +295,14 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
     //Ler as arestas
     char no1, no2;
     int pond = 1;
-    while(arquivo >> no1 >> no2) {
+    while(getline(arquivo, linha)) {
+        istringstream iss(linha);
+        iss >> no1 >> no2;
+
         if(!grafo->encontrar_no_por_id(no1) || !grafo->encontrar_no_por_id(no2))
             continue;
         
-        if (pond_arestas && !(arquivo >> pond)) {
+        if (pond_arestas && !(iss >> pond)) {
             cerr << "Erro ao ler o peso da aresta entre " << no1 << " e " << no2 << endl;
             delete grafo;
             return nullptr;

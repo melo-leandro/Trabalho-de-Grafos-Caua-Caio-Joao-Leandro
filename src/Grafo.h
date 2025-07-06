@@ -8,12 +8,13 @@
 #include "No.h"
 #include <iostream>
 #include <vector>
+#include <map>
 
 
 using namespace std;
 class Grafo {
     public:
-        Grafo(bool dir, bool pond_vertices, bool pond_arestas, int ordem);
+        Grafo(bool dir, bool pond_arestas, bool pond_vertices, int ordem);
         ~Grafo();
 
         vector<char> fecho_transitivo_direto(char id_no); // a
@@ -27,14 +28,11 @@ class Grafo {
         int diametro(); // h 2
         vector<char> centro(); // h 3
         vector<char> periferia(); // h 4
-        vector<char> vertices_de_articulacao(); // i
 
         //Funções auxiliares
         No* encontrar_no_por_id(char id);
         pair<vector<char>, int> auxiliar_dijkstra(char id_no_a, char id_no_b);
         int distancia(char id_no_a, char id_no_b);
-        char achar_rep(char x);
-        void unir_sets(char x, char y);
   
         //Getters e Setters
         bool is_direcionado();
@@ -52,12 +50,24 @@ class Grafo {
         vector<No*> get_lista_adj();
         
         void adicionar_no(No* no);
-                
-    private:
+
+        // Mapa para armazenar as excentricidades de cada nó
+        map<char, int> excentricidades;
+        
+        //Funções auxiliares
+        No* encontrar_no_por_id(char id);
+        pair<vector<char>, int> auxiliar_dijkstra(char id_no_a, char id_no_b);
+        int distancia(char id_no_a, char id_no_b);
+        int excentricidade(char id_no);
+        map<char, int> todas_excentricidades();
+        
+        
+        private:
         bool in_direcionado;
         bool in_ponderado_vertice;
         bool in_ponderado_aresta;
         int ordem;
         vector<No*> lista_adj;
+        void dfs_util(char atual, std::map<char, bool>& visitado, Grafo* arvore, std::map<char, No*>& mapa_novos_nos);
 };
 #endif //GRAFO_H
