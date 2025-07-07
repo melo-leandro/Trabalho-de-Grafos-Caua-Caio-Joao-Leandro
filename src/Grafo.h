@@ -45,17 +45,12 @@ class Grafo {
         vector<No*> get_lista_adj();
         
         void adicionar_no(No* no);
-
-        // Mapa para armazenar as excentricidades de cada nó
-        map<char, int> excentricidades;
         
         //Funções auxiliares
         No* encontrar_no_por_id(char id);
         pair<vector<char>, int> auxiliar_dijkstra(char id_no_a, char id_no_b);
         int distancia(char id_no_a, char id_no_b);
-        int excentricidade(char id_no);
-        map<char, int> todas_excentricidades();
-        
+        int excentricidade(char id_no);       
         
         private:
         bool in_direcionado;
@@ -63,6 +58,6 @@ class Grafo {
         bool in_ponderado_aresta;
         int ordem;
         vector<No*> lista_adj;
-        void dfs_util(char atual, std::map<char, bool>& visitado, Grafo* arvore, std::map<char, No*>& mapa_novos_nos);
+        void dfs_util(char atual, map<char, bool>& visitado, Grafo* arvore, map<char, No*>& mapa_novos_nos);
 };
 #endif //GRAFO_H

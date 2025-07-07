@@ -18,9 +18,6 @@ Grafo::Grafo(bool dir, bool pond_arestas, bool pond_vertices, int ordem) {
 // Destrutor
 Grafo::~Grafo() {
     for(No* no : this->lista_adj) {
-        for(Aresta* aresta : no->get_arestas()) {
-            delete aresta;
-        }
         delete no;
     }
 }
@@ -129,6 +126,7 @@ void Grafo::adicionar_no(No* no){
     this->lista_adj.push_back(no);
 }
 
+// Fecho Transitivo Direto
 vector<char> Grafo::fecho_transitivo_direto(char id_no) {
     vector<char> fecho;
     map<char, bool> visitados;
@@ -166,6 +164,7 @@ vector<char> Grafo::fecho_transitivo_direto(char id_no) {
     return fecho;
 }
 
+// Fecho Transitivo Indireto
 vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
     vector<char> fecho;
     queue<pair<char, int>> fila_bfs;
@@ -211,11 +210,12 @@ vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
 }
 
 
-
+// Caminho Mínimo Dijkstra
 vector<char> Grafo::caminho_minimo_dijkstra(char id_no_a, char id_no_b) {
     return auxiliar_dijkstra(id_no_a, id_no_b).first;
 }
 
+// Caminho Mínimo Floyd-Warshall
 vector<char> Grafo::caminho_minimo_floyd(char id_no_a, char id_no_b) {
     // Mapeia id dos vértices para índices
     vector<No*> nos = this->get_lista_adj();
@@ -277,6 +277,7 @@ vector<char> Grafo::caminho_minimo_floyd(char id_no_a, char id_no_b) {
     return caminho;
 }
 
+// Árvore Geradora Mínima (Prim)
 Grafo * Grafo::arvore_geradora_minima_prim(vector<char> ids_nos) {
     if(ids_nos.empty()){
         cout<<"O subconjunto de nós é vazio"<<endl;
@@ -361,6 +362,7 @@ Grafo * Grafo::arvore_geradora_minima_prim(vector<char> ids_nos) {
     return agm;
 }
 
+// Árvore Geradora Mínima (Kruskal)
 Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
     if(!is_ponderado_aresta() || is_direcionado()){
         cout << "Não é possível encontrar a AGM de um grafo direcionado ou não ponderado nas arestas" << endl;
@@ -489,7 +491,8 @@ Grafo * Grafo::arvore_geradora_minima_kruskal(vector<char> ids_nos) {
     return AGM;
 }
 
-void Grafo::dfs_util(char atual, std::map<char, bool>& visitado, Grafo* arvore, std::map<char, No*>& mapa_novos_nos) {
+// Função auxiliar para construir a árvore de caminhamento em profundidade
+void Grafo::dfs_util(char atual, map<char, bool>& visitado, Grafo* arvore, map<char, No*>& mapa_novos_nos) {
     visitado[atual] = true;
     No* no_atual = this->encontrar_no_por_id(atual);
     for (Aresta* aresta : no_atual->get_arestas()) {
@@ -504,6 +507,7 @@ void Grafo::dfs_util(char atual, std::map<char, bool>& visitado, Grafo* arvore, 
     }
 }
 
+// Árvore de Caminhamento em Profundidade
 Grafo* Grafo::arvore_caminhamento_profundidade(char id_no) {
     No* no_inicial = encontrar_no_por_id(id_no);
     if (!no_inicial) {
@@ -511,30 +515,23 @@ Grafo* Grafo::arvore_caminhamento_profundidade(char id_no) {
         return nullptr;
     }
     Grafo* arvore = new Grafo(this->is_direcionado(), this->is_ponderado_aresta(), this->is_ponderado_vertice(), this->get_ordem());
-    std::map<char, No*> mapa_novos_nos;
+    map<char, No*> mapa_novos_nos;
     for (No* no : this->get_lista_adj()) {
         No* novo_no = new No(no->get_id(), no->get_peso());
         arvore->adicionar_no(novo_no);
         mapa_novos_nos[no->get_id()] = novo_no;
     }
-    std::map<char, bool> visitado;
+    map<char, bool> visitado;
     this->dfs_util(id_no, visitado, arvore, mapa_novos_nos);
     return arvore;
 }
 
+// Função auxiliar que calcula a distância entre dois nó usando Dijkstra
 int Grafo::distancia(char id_no_a, char id_no_b) {
     return auxiliar_dijkstra(id_no_a, id_no_b).second;
 }
 
-map<char, int> Grafo::todas_excentricidades() {
-    map<char, int> resultado;
-    for (No* no : this->get_lista_adj()) {
-        resultado[no->get_id()] = excentricidade(no->get_id());
-    }
-    return resultado;
-}
-
-
+// Função auxiliar que retorna a excentricidade de um nó
 int Grafo::excentricidade(char id_no) {
     No* no = this->encontrar_no_por_id(id_no);
     if(!no) return INT_MAX;
@@ -551,6 +548,7 @@ int Grafo::excentricidade(char id_no) {
     return max_distancia;
 }
 
+//Função que calcula o raio do grafo
 int Grafo::raio() {
     int raio = INT_MAX;
 
@@ -569,6 +567,7 @@ int Grafo::raio() {
     return raio;
 }
 
+// Função que calcula o diâmetro do grafo
 int Grafo::diametro() {
     int diametro = INT_MIN;
 
@@ -587,6 +586,7 @@ int Grafo::diametro() {
     return diametro;
 }
 
+// Função que retorna o centro do grafo
 vector<char> Grafo::centro() {
     int raio = this->raio();
     if(raio == INT_MAX) {
@@ -604,6 +604,7 @@ vector<char> Grafo::centro() {
     return centro;
 }
 
+// Função que retorna a periferia do grafo
 vector<char> Grafo::periferia() {
     int diametro = this->diametro();
     if(diametro == INT_MIN) {

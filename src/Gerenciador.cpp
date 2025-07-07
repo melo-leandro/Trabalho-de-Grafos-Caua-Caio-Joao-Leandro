@@ -10,6 +10,10 @@ void Gerenciador::comandos(Grafo* grafo) {
     cout << "Ponderado por aresta: " << (grafo->is_ponderado_aresta() ? "Sim" : "Nao") << endl;
     cout << "Ponderado por vertice: " << (grafo->is_ponderado_vertice() ? "Sim" : "Nao") << endl;
     cout << "Ordem do grafo: " << grafo->get_ordem() << endl;
+
+    cout << "Lista de adjacencia:" << endl;
+    imprimir_grafo(grafo);
+    cout << endl;
     
     cout<<"Digite uma das opcoes abaixo e pressione enter:"<<endl<<endl;
     cout<<"(a) Fecho transitivo direto de um no;"<<endl;
@@ -28,15 +32,18 @@ void Gerenciador::comandos(Grafo* grafo) {
         case 'a': {
 
             char id_no = get_id_entrada();
+            
             //Função
             vector<char> fecho_transitivo_direto = grafo->fecho_transitivo_direto(id_no);
+            
+            // Impressão na tela
             for(char id : fecho_transitivo_direto) {
                 cout << id << (id != fecho_transitivo_direto.back() ? ", " : "\n");
             }
 
             //Impressão em arquivo
             string saida = "fecho_trans_dir.txt";
-            if(pergunta_imprimir_arquivo(saida)) {
+            if(pergunta_imprimir_arquivo(saida) && !fecho_transitivo_direto.empty()) {
                 gerar_arquivo_saida_vetor(fecho_transitivo_direto, saida);
             }
 
@@ -46,15 +53,17 @@ void Gerenciador::comandos(Grafo* grafo) {
         case 'b':{
 
             char id_no = get_id_entrada();
+
             //Função
             vector<char> fecho_transitivo_indireto = grafo->fecho_transitivo_indireto(id_no);
+
             // Impressão na tela
             for(char id : fecho_transitivo_indireto) {
                 cout << id << (id != fecho_transitivo_indireto.back() ? ", " : "\n");
             }
             // Impressão em arquivo
             string saida = "fecho_trans_dir.txt";
-            if(pergunta_imprimir_arquivo(saida)) {
+            if(pergunta_imprimir_arquivo(saida) && !fecho_transitivo_indireto.empty()) {
                 gerar_arquivo_saida_vetor(fecho_transitivo_indireto, saida);
             }
             break;
@@ -64,14 +73,18 @@ void Gerenciador::comandos(Grafo* grafo) {
 
             char id_no_1 = get_id_entrada();
             char id_no_2 = get_id_entrada();
+
+            // Função
             vector<char> caminho_minimo_dijkstra = grafo->caminho_minimo_dijkstra(id_no_1,id_no_2);
+            
+            // Impressão na tela   
             for(char id : caminho_minimo_dijkstra) {
-                cout << id << endl;
+                cout << id << (id != caminho_minimo_dijkstra.back() ? ", " : "\n");
             }
 
             // Impressão em arquivo
             string saida = "caminho_minimo_dijkstra.txt";
-            if(pergunta_imprimir_arquivo(saida)) {
+            if(pergunta_imprimir_arquivo(saida) && !caminho_minimo_dijkstra.empty()) {
                 gerar_arquivo_saida_vetor(caminho_minimo_dijkstra, saida);
             }
 
@@ -82,19 +95,17 @@ void Gerenciador::comandos(Grafo* grafo) {
 
             char id_no_1 = get_id_entrada();
             char id_no_2 = get_id_entrada();
+            // Função
             vector<char> caminho_minimo_floyd = grafo->caminho_minimo_floyd(id_no_1,id_no_2);
-            // Impressão no formato solicitado: a,b,c
-            if (!caminho_minimo_floyd.empty()) {
-                for (size_t i = 0; i < caminho_minimo_floyd.size(); ++i) {
-                    cout << caminho_minimo_floyd[i];
-                    if (i != caminho_minimo_floyd.size() - 1) cout << ",";
-                }
-                cout << endl << endl;
-            } else {
-                cout << "Nao existe caminho entre os vertices." << endl << endl;
+
+            // Impressão em tela
+            for(char id : caminho_minimo_floyd) {
+                cout << id << (id != caminho_minimo_floyd.back() ? ", " : "\n");
             }
+            
+            // Impressão em arquivo
             string saida = "caminho_minimo_floyd.txt";
-            if(pergunta_imprimir_arquivo(saida)) {
+            if(pergunta_imprimir_arquivo(saida) && !caminho_minimo_floyd.empty()) {
                 gerar_arquivo_saida_vetor(caminho_minimo_floyd, saida);
             }
             break;
@@ -109,14 +120,16 @@ void Gerenciador::comandos(Grafo* grafo) {
             if(tam > 0 && tam <= grafo->get_ordem()) {
 
                 vector<char> ids = get_conjunto_ids(grafo,tam);
+                
+                //Função
                 Grafo* arvore_geradora_minima_prim = grafo->arvore_geradora_minima_prim(ids);
-                if(!arvore_geradora_minima_prim){
-                    break;
-                }
+
+                //Impressão em tela
                 imprimir_grafo(arvore_geradora_minima_prim);
+
                 //Impressão em arquivo
                 string saida = "agm_prim.txt";
-                if(pergunta_imprimir_arquivo(saida)) {
+                if(pergunta_imprimir_arquivo(saida) && arvore_geradora_minima_prim) {
                     gerar_arquivo_saida_grafo(arvore_geradora_minima_prim, saida, true);
                 }
 
@@ -131,7 +144,6 @@ void Gerenciador::comandos(Grafo* grafo) {
 
         case 'f': {
             
-            imprimir_grafo(grafo);
             int tam;
             cout<<"Digite o tamanho do subconjunto: ";
             cin>>tam;
@@ -139,18 +151,16 @@ void Gerenciador::comandos(Grafo* grafo) {
             if(tam > 0 && tam <= grafo->get_ordem()) {
 
                 vector<char> ids = get_conjunto_ids(grafo,tam);
+
                 //Função
                 Grafo* arvore_geradora_minima_kruskal = grafo->arvore_geradora_minima_kruskal(ids);
+
                 //Impressão em tela
-                if(arvore_geradora_minima_kruskal) {
-                    imprimir_grafo(arvore_geradora_minima_kruskal);
-                }
+                imprimir_grafo(arvore_geradora_minima_kruskal);
+
                 //Impressão em arquivo
                 string saida = "agm_kruskal.txt";
-                if(!arvore_geradora_minima_kruskal) {
-                    break;
-                }
-                if(pergunta_imprimir_arquivo(saida)) {
+                if(pergunta_imprimir_arquivo(saida) && arvore_geradora_minima_kruskal) {
                     gerar_arquivo_saida_grafo(arvore_geradora_minima_kruskal, saida, true);
                 }
 
@@ -166,25 +176,15 @@ void Gerenciador::comandos(Grafo* grafo) {
         case 'g': {
 
             char id_no = get_id_entrada();
+            // Função
             Grafo* arvore_caminhamento_profundidade = grafo->arvore_caminhamento_profundidade(id_no);
+            
             //Impressão em tela
-            if (arvore_caminhamento_profundidade) {
-                for (No* no : arvore_caminhamento_profundidade->get_lista_adj()) {
-                    cout << no->get_id() << ": ";
-                    vector<Aresta*> arestas = no->get_arestas();
-                    for (size_t i = 0; i < arestas.size(); ++i) {
-                        cout << arestas[i]->get_id_destino();
-                        if (i != arestas.size() - 1) cout << " -> ";
-                    }
-                    cout << endl;
-                }
-                cout << endl;
-            } else {
-                cout << "Nao foi possivel construir a arvore de caminhamento em profundidade." << endl;
-            }
+            imprimir_grafo(arvore_caminhamento_profundidade);
+
             //Impressão em arquivo
             string saida = "arvore_caminhamento_profundidade.txt";
-            if(pergunta_imprimir_arquivo(saida)) {
+            if(pergunta_imprimir_arquivo(saida) && arvore_caminhamento_profundidade) {
                 gerar_arquivo_saida_grafo(arvore_caminhamento_profundidade, saida, false);
             }
             delete arvore_caminhamento_profundidade;
@@ -194,22 +194,22 @@ void Gerenciador::comandos(Grafo* grafo) {
         case 'h': {
             int raio = grafo->raio();
             int diametro = grafo->diametro();
-            cout << "Raio: " << raio << endl;
-            cout << "Diametro: " << diametro << endl;
             vector<char> centro = grafo->centro();
             vector<char> periferia = grafo->periferia();
 
-            cout << "Centro: ";
-            for (char id : centro) {
-                cout << id << "";
+            //Impressões em tela
+            cout << raio << endl;
+            cout << diametro << endl;
+            
+            for(char id : centro) {
+                cout << id << (id != centro.back() ? ", " : "\n");
             }
-            cout << endl;
-            cout << "Periferia: ";
-            for (char id : periferia) {
-                cout << id << " ";
-            }
-            cout << endl;
 
+            for(char id : periferia) {
+                cout << id << (id != centro.back() ? ", " : "\n");
+            }
+
+            //Impressão em arquivo
             if(pergunta_imprimir_arquivo("raio_diametro_centro_periferia.txt")) {
 
                 ofstream arquivo_saida("src/output/raio_diametro_centro_periferia.txt");
@@ -379,16 +379,18 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
 }
 
 void Gerenciador::imprimir_grafo(Grafo* grafo) {
+    if(!grafo) {
+        cout << "Grafo vazio ou nulo." << endl;
+        return;
+    }
+
     for(No* no: grafo->get_lista_adj()) {
-        cout << no->get_id() << "("<<  no->get_peso() << ") -> ";
-        
+        cout << no->get_id() << ": ";
         for(Aresta* aresta: no->get_arestas()){
-            cout << "{"<< aresta->get_peso() << "} ";
-        
-            cout << aresta->get_id_destino() << "(" << grafo->encontrar_no_por_id(aresta->get_id_destino())->get_peso() << ") ";
-        
+            cout << aresta->get_id_destino();
+            if(aresta != no->get_arestas().back())
+                cout << " -> ";
         }
-        
         cout << endl;
     }
 }
