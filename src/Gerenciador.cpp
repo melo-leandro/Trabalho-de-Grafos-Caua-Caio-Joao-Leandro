@@ -62,7 +62,7 @@ void Gerenciador::comandos(Grafo* grafo) {
                 cout << id << (id != fecho_transitivo_indireto.back() ? ", " : "\n");
             }
             // Impressão em arquivo
-            string saida = "fecho_trans_dir.txt";
+            string saida = "fecho_trans_ind.txt";
             if(pergunta_imprimir_arquivo(saida) && !fecho_transitivo_indireto.empty()) {
                 gerar_arquivo_saida_vetor(fecho_transitivo_indireto, saida);
             }
@@ -206,7 +206,7 @@ void Gerenciador::comandos(Grafo* grafo) {
             }
 
             for(char id : periferia) {
-                cout << id << (id != centro.back() ? ", " : "\n");
+                cout << id << (id != periferia.back() ? ", " : "\n");
             }
 
             //Impressão em arquivo
