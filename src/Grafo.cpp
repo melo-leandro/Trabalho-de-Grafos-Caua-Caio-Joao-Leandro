@@ -7,6 +7,7 @@
 
 using namespace std;
 
+// Construtor
 Grafo::Grafo(bool dir, bool pond_arestas, bool pond_vertices, int ordem) {
     set_direcionado(dir);
     set_ponderado_vertice(pond_vertices);
@@ -14,7 +15,18 @@ Grafo::Grafo(bool dir, bool pond_arestas, bool pond_vertices, int ordem) {
     set_ordem(ordem);
 }
 
-//Função criada para encontrar nó no grafo a partir do ID
+// Destrutor
+Grafo::~Grafo() {
+    for(No* no : this->lista_adj) {
+        for(Aresta* aresta : no->get_arestas()) {
+            delete aresta;
+        }
+        delete no;
+    }
+}
+
+
+//Função auxiliar criada para encontrar nó no grafo a partir do ID
 No* Grafo::encontrar_no_por_id(char id) {
     for(No* vertice: this->lista_adj){
         if(vertice->get_id() == id)
@@ -23,7 +35,7 @@ No* Grafo::encontrar_no_por_id(char id) {
     return nullptr;
 }
 
-//Função criada para encontrar o caminho mínimo e calcular a distância simultâneamente
+//Função auxiliar criada para encontrar o caminho mínimo e calcular a distância simultâneamente
 pair<vector<char>, int> Grafo::auxiliar_dijkstra(char id_no_a, char id_no_b) {
     No* no_a = this->encontrar_no_por_id(id_no_a);
     No* no_b = this->encontrar_no_por_id(id_no_b);
@@ -76,9 +88,6 @@ pair<vector<char>, int> Grafo::auxiliar_dijkstra(char id_no_a, char id_no_b) {
     return {caminho, distancia[id_no_b]};
 }
 
-Grafo::~Grafo() {
-    
-}
 
 bool Grafo::is_direcionado() {
     return this->in_direcionado;
