@@ -30,7 +30,9 @@ void Gerenciador::comandos(Grafo* grafo) {
             char id_no = get_id_entrada();
             //Função
             vector<char> fecho_transitivo_direto = grafo->fecho_transitivo_direto(id_no);
-            cout<<"Metodo de impressao em tela nao implementado"<<endl<<endl;
+            for(char id : fecho_transitivo_direto) {
+                cout << id << (id != fecho_transitivo_direto.back() ? ", " : "\n");
+            }
 
             //Impressão em arquivo
             string saida = "fecho_trans_dir.txt";
@@ -91,8 +93,9 @@ void Gerenciador::comandos(Grafo* grafo) {
             } else {
                 cout << "Nao existe caminho entre os vertices." << endl << endl;
             }
-            if(pergunta_imprimir_arquivo("caminho_minimo_floyd.txt")) {
-                cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
+            string saida = "caminho_minimo_floyd.txt";
+            if(pergunta_imprimir_arquivo(saida)) {
+                gerar_arquivo_saida_vetor(caminho_minimo_floyd, saida);
             }
             break;
         }
@@ -107,8 +110,10 @@ void Gerenciador::comandos(Grafo* grafo) {
 
                 vector<char> ids = get_conjunto_ids(grafo,tam);
                 Grafo* arvore_geradora_minima_prim = grafo->arvore_geradora_minima_prim(ids);
-                cout<<"Metodo de impressao em tela nao implementado"<<endl<<endl;
-
+                if(!arvore_geradora_minima_prim){
+                    break;
+                }
+                imprimir_grafo(arvore_geradora_minima_prim);
                 //Impressão em arquivo
                 string saida = "agm_prim.txt";
                 if(pergunta_imprimir_arquivo(saida)) {
@@ -187,15 +192,12 @@ void Gerenciador::comandos(Grafo* grafo) {
         }
 
         case 'h': {
-            cout << "Raio: " << grafo->raio() << endl;
-            cout << "Diametro: " << grafo->diametro() << endl;
+            int raio = grafo->raio();
+            int diametro = grafo->diametro();
+            cout << "Raio: " << raio << endl;
+            cout << "Diametro: " << diametro << endl;
             vector<char> centro = grafo->centro();
             vector<char> periferia = grafo->periferia();
-
-            cout << "Excentricidade: " << endl;
-            for (No* no : grafo->get_lista_adj()) {
-                cout << no->get_id() << ": " << grafo->excentricidade(no->get_id()) << endl;
-            }  
 
             cout << "Centro: ";
             for (char id : centro) {
@@ -208,8 +210,27 @@ void Gerenciador::comandos(Grafo* grafo) {
             }
             cout << endl;
 
-            if(pergunta_imprimir_arquivo("arvore_caminhamento_profundidade.txt")) {
-                cout<<"Metodo de impressao em arquivo nao implementado"<<endl;
+            if(pergunta_imprimir_arquivo("raio_diametro_centro_periferia.txt")) {
+
+                ofstream arquivo_saida("src/output/raio_diametro_centro_periferia.txt");
+                if (!arquivo_saida.is_open()) {
+                    cerr << "Erro ao abrir o arquivo: raio_diametro_centro_periferia.txt" << endl;
+                    return;
+                }
+
+                arquivo_saida << raio << endl;
+                arquivo_saida << diametro << endl;
+                for (size_t i = 0; i < centro.size(); ++i) {
+                    arquivo_saida << centro[i];
+                    if (i != centro.size() - 1) arquivo_saida << ", ";
+                }
+                arquivo_saida << endl;
+                for (size_t i = 0; i < periferia.size(); ++i) {
+                    arquivo_saida << periferia[i];
+                    if (i != periferia.size() - 1) arquivo_saida << ", ";
+                }
+                
+                arquivo_saida.close();
             }
 
             break;
@@ -373,7 +394,7 @@ void Gerenciador::imprimir_grafo(Grafo* grafo) {
 }
 
 void Gerenciador::gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo, bool imprimir_estrutura_grafo) {
-    ofstream arquivo_saida("output/" + nome_arquivo);
+    ofstream arquivo_saida("src/output/" + nome_arquivo);
     if (!arquivo_saida.is_open()) {
         cerr << "Erro ao abrir o arquivo: " << nome_arquivo << endl;
         return;
@@ -420,7 +441,7 @@ void Gerenciador::gerar_arquivo_saida_grafo(Grafo* grafo, string nome_arquivo, b
 }
 
 void Gerenciador::gerar_arquivo_saida_vetor(vector<char> vetor, string nome_arquivo) {
-    ofstream arquivo_saida("output/" + nome_arquivo);
+    ofstream arquivo_saida("src/output/" + nome_arquivo);
     if (!arquivo_saida.is_open()) {
         cerr << "Erro ao abrir o arquivo: " << nome_arquivo << endl;
         return;
