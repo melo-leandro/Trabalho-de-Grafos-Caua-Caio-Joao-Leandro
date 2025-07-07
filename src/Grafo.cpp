@@ -167,47 +167,36 @@ vector<char> Grafo::fecho_transitivo_direto(char id_no) {
 // Fecho Transitivo Indireto
 vector<char> Grafo::fecho_transitivo_indireto(char id_no) {
     vector<char> fecho;
-    queue<pair<char, int>> fila_bfs;
+    queue<char> fila_bfs;
     map<char, bool> visitado;
 
-    No* no_inicial = encontrar_no_por_id(id_no);
-    if (!no_inicial) {
-        cout << "Erro: vértice não encontrado." << endl;
-        return fecho;
-    }
-
-    fila_bfs.push({id_no, 0});
+    fila_bfs.push(id_no);
     visitado[id_no] = true;
 
     while (!fila_bfs.empty()) {
-        auto item = fila_bfs.front();
+        char atual = fila_bfs.front();
         fila_bfs.pop();
 
-        char atual = item.first;
-        int dist = item.second;
-
-        No* no_atual = encontrar_no_por_id(atual);
-        if (!no_atual) continue;
-
-        for (Aresta* aresta : no_atual->get_arestas()) {
-            char vizinho = aresta->get_id_destino();
-            if (!visitado[vizinho]) {
-                visitado[vizinho] = true;
-                fila_bfs.push({vizinho, dist + 1});
-                if(dist + 1 > 1)
-                    fecho.push_back(vizinho);
+        for (No* no : this->get_lista_adj()) {
+            for (Aresta* aresta : no->get_arestas()) {
+                if (aresta->get_id_destino() == atual && !visitado[no->get_id()]) {
+                    visitado[no->get_id()] = true;
+                    fila_bfs.push(no->get_id());
+                    fecho.push_back(no->get_id());
+                }
             }
         }
     }
 
     sort(fecho.begin(), fecho.end());
-
+    
     if (fecho.empty()) {
         cout << "Erro: não há fecho transitivo indireto." << endl;
     }
 
     return fecho;
 }
+
 
 
 // Caminho Mínimo Dijkstra
