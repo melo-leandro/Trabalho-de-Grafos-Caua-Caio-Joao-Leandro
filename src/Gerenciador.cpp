@@ -380,7 +380,7 @@ Grafo* Gerenciador::carregar_informacoes_entrada(string nome_arquivo) {
 
 void Gerenciador::imprimir_grafo(Grafo* grafo) {
     if(!grafo) {
-        cout << "Grafo vazio ou nulo." << endl;
+        cout << "Não é possível imprimir" << endl;
         return;
     }
 

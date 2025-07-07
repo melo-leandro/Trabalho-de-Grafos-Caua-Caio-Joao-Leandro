@@ -14,7 +14,6 @@ No::~No() {
             delete get_arestas()[i];
         }
     }
-    cout << get_arestas().size();
 }
 
 char No::get_id() {
