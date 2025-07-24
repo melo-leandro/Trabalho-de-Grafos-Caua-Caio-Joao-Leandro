@@ -10,7 +10,6 @@ void Gerenciador::comandos(Grafo* grafo) {
     cout << "Ponderado por aresta: " << (grafo->is_ponderado_aresta() ? "Sim" : "Nao") << endl;
     cout << "Ponderado por vertice: " << (grafo->is_ponderado_vertice() ? "Sim" : "Nao") << endl;
     cout << "Ordem do grafo: " << grafo->get_ordem() << endl;
-
     cout << "Lista de adjacencia:" << endl;
     imprimir_grafo(grafo);
     cout << endl;
@@ -24,6 +23,7 @@ void Gerenciador::comandos(Grafo* grafo) {
     cout<<"(f) Arvore Geradora Minima (Algoritmo de Kruskal);"<<endl;
     cout<<"(g) Arvore de caminhamento em profundidade;"<<endl;
     cout<<"(h) Raio, diametro, centro e periferia do grafo;"<<endl;
+    cout<<"(j) Algoritmos Gulosos;"<<endl;
     cout<<"(0) Sair;"<<endl<<endl;
 
     char resp;
@@ -236,6 +236,47 @@ void Gerenciador::comandos(Grafo* grafo) {
             break;
         }
 
+        case 'j': {
+            cout<<"Algoritmos Gulosos"<<endl;
+            cout<<"Digite uma das opcoes abaixo e pressione enter:"<<endl<<endl;
+            cout<<"(a) Algoritmo Guloso Tradicional;"<<endl;
+            cout<<"(b) Algoritmo Guloso Randomizado;"<<endl;
+            cout<<"(c) Algoritmo Guloso Randomizado Adaptativo;"<<endl;
+            cout<<"(0) Voltar ao menu principal;"<<endl<<endl;
+            
+
+            char res;
+            cin >> res;
+            switch(res) {
+                case 'a': {
+                    cout<<"Algoritmo Guloso Tradicional"<<endl;
+                    // Implementar o algoritmo guloso tradicional aqui
+                    break;
+                }
+
+                case 'b': {
+                    cout<<"Algoritmo Guloso Randomizado"<<endl;
+                    // Implementar o algoritmo guloso randomizado aqui
+                    break;
+                }
+
+                case 'c': {
+                    cout<<"Algoritmo Guloso Randomizado Adaptativo"<<endl;
+                    // Implementar o algoritmo guloso randomizado adaptativo aqui
+                    break;
+                }
+
+                case '0': {
+                    cout<<"Voltando ao menu principal..."<<endl;
+                    comandos(grafo);
+                }
+                
+                default: {
+                    cout<<"Opção inválida"<<endl;
+                }
+            }
+        }
+
         case '0': {
             exit(0);
         }
@@ -248,6 +289,7 @@ void Gerenciador::comandos(Grafo* grafo) {
     comandos(grafo);
 
 }
+
 
 char Gerenciador::get_id_entrada() {
     cout<<"Digite o id de um no: ";
