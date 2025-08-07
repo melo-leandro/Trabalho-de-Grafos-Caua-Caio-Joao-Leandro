@@ -2,6 +2,7 @@
 #include "No.h"
 #include <fstream>
 #include <sstream>
+#include "Guloso.h"
 
 
 void Gerenciador::comandos(Grafo* grafo) {
@@ -249,8 +250,13 @@ void Gerenciador::comandos(Grafo* grafo) {
             cin >> res;
             switch(res) {
                 case 'a': {
-                    cout<<"Algoritmo Guloso Tradicional"<<endl;
-                    // Implementar o algoritmo guloso tradicional aqui
+                    vector<char> solucao = Guloso::algoritmo_guloso_adaptativo(*grafo);
+                    
+                    cout << "Solução do algoritmo guloso: ";
+                    for(char id : solucao) {
+                        cout << id << (id != solucao.back() ? ", " : "\n");
+                    }
+
                     break;
                 }
 

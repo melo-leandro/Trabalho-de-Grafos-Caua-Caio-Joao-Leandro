@@ -1,0 +1,22 @@
+0 0 1
+10
+A 3  
+B 5  
+C 2  
+D 4  
+E 1  
+F 6  
+G 2  
+H 3  
+I 4  
+J 5  
+A B  
+A C  
+B D  
+C E  
+D F  
+E G  
+F H  
+G I  
+H J  
+I J  

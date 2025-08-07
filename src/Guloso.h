@@ -3,15 +3,27 @@
 
 #include "Grafo.h"
 #include <iostream>
+#include <queue>
+
+using namespace std;
 
 class Guloso {
     public:
-        // Algoritmo Guloso Tradicional
-        void gulosoTradicional(Grafo &grafo);
-        // Algoritmo Guloso Randomizado
-        void gulosoRandomizado(Grafo &grafo, float alpha, int n_iteracoes);
-        // Algoritmo Guloso Randomizado Adaptativo
-        void gulosoRandomizadoAdaptativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco);
+        Guloso(bool dir, bool pond_arestas, bool pond_vertices, int ordem);
+        ~Guloso();
+
+        //TRUE -> 'b' tem maior prioridade (vai para o topo)
+        //FALSE -> 'a' tem maior prioridade (vai para o topo)
+        struct NoComparator {
+            bool operator()(No* a, No* b) const {
+                return a->get_peso() > b->get_peso(); // min-heap por peso
+            }
+        };
+
+        static vector<char> algoritmo_guloso(Grafo &grafo);
+        static vector<char> algoritmo_guloso_adaptativo(Grafo &grafo);
+        static vector<char> gulosoRandomizado(Grafo &grafo, float alpha, int n_iteracoes);
+        static vector<char> gulosoRandomizadoReativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco);
 
     private:
 };
