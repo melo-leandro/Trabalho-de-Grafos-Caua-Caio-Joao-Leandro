@@ -22,7 +22,7 @@ class Guloso {
 
         static vector<char> algoritmo_guloso(Grafo &grafo);
         static vector<char> algoritmo_guloso_adaptativo(Grafo &grafo);
-        static vector<char> gulosoRandomizado(Grafo &grafo, float alpha, int n_iteracoes);
+        static vector<char> guloso_randomizado(Grafo &grafo, float alpha, int n_iteracoes);
         static vector<char> gulosoRandomizadoReativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco);
 
     private:
