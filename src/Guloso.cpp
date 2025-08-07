@@ -208,6 +208,105 @@ vector<char> Guloso::guloso_randomizado(Grafo &grafo, float alpha, int n_iteraco
 }
 
 // Algoritmo Guloso Randomizado Adaptativo
-vector<char> Guloso::gulosoRandomizadoReativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco) {
-    return {};
+vector<char> Guloso::guloso_randomizado_reativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco) {
+    if (grafo.get_lista_adj().empty())
+        return {};
+    
+    srand(time(nullptr));
+    
+    int num_alphas = 10;
+    vector<int> contador(num_alphas, 0);
+    vector<float> qualidade_total(num_alphas, 0.0);
+    
+    vector<char> melhor_solucao;
+    float melhor_peso = FLT_MAX;
+    
+    for (int iter = 0; iter < n_iteracoes; ++iter) {
+        // Escolhe alpha (inicialmente aleatório, depois baseado em qualidade)
+        int alpha_idx = (iter < bloco) ? rand() % num_alphas : 0;
+        
+        if (iter >= bloco) {
+            float melhor_media = -1.0;
+            for (int i = 0; i < num_alphas; ++i) {
+                if (contador[i] > 0) {
+                    float media = qualidade_total[i] / contador[i];
+                    if (media > melhor_media) {
+                        melhor_media = media;
+                        alpha_idx = i;
+                    }
+                }
+            }
+        }
+        
+        float alpha_atual = alpha[alpha_idx];
+        
+        // Executa GRASP com alpha escolhido
+        vector<char> solucao;
+        set<char> nos_usados;
+        set<char> vertices_dominados;
+        float peso_total = 0.0;
+        
+        while (vertices_dominados.size() < grafo.get_lista_adj().size()) {
+            vector<pair<No*, float>> candidatos;
+            float max_beneficio = 0.0, min_beneficio = FLT_MAX;
+            
+            for (No* no : grafo.get_lista_adj()) {
+                if (nos_usados.count(no->get_id()) || no->get_peso() <= 0)
+                    continue;
+                
+                int novos = 0;
+                if (!vertices_dominados.count(no->get_id())) novos++;
+                for (Aresta* aresta : no->get_arestas()) {
+                    if (!vertices_dominados.count(aresta->get_id_destino()))
+                        novos++;
+                }
+                
+                if (novos == 0) continue;
+                
+                float beneficio = (float)novos / no->get_peso();
+                candidatos.push_back({no, beneficio});
+                
+                if (beneficio > max_beneficio) max_beneficio = beneficio;
+                if (beneficio < min_beneficio) min_beneficio = beneficio;
+            }
+            
+            if (candidatos.empty()) break;
+            
+            // LRC simplificada
+            vector<No*> LRC;
+            float limite = min_beneficio + alpha_atual * (max_beneficio - min_beneficio);
+            
+            for (auto& par : candidatos) {
+                if (par.second >= limite) {
+                    LRC.push_back(par.first);
+                }
+            }
+            
+            if (LRC.empty()) break;
+            
+            No* escolhido = LRC[rand() % LRC.size()];
+            
+            solucao.push_back(escolhido->get_id());
+            nos_usados.insert(escolhido->get_id());
+            peso_total += escolhido->get_peso();
+            
+            vertices_dominados.insert(escolhido->get_id());
+            for (Aresta* aresta : escolhido->get_arestas()) {
+                vertices_dominados.insert(aresta->get_id_destino());
+            }
+        }
+        
+        // Atualiza melhor solução e estatísticas
+        if (vertices_dominados.size() == grafo.get_lista_adj().size()) {
+            if (peso_total < melhor_peso) {
+                melhor_peso = peso_total;
+                melhor_solucao = solucao;
+            }
+            
+            contador[alpha_idx]++;
+            qualidade_total[alpha_idx] += (peso_total > 0) ? 1.0 / peso_total : 0.0;
+        }
+    }
+    
+    return melhor_solucao;
 }   
