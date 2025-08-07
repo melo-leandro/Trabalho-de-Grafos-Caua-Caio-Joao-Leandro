@@ -14,7 +14,7 @@
 using namespace std;
 class Grafo {
     public:
-        Grafo();
+        Grafo(bool dir, bool pond_arestas, bool pond_vertices, int ordem);
         ~Grafo();
 
         vector<char> fecho_transitivo_direto(char id_no); // a

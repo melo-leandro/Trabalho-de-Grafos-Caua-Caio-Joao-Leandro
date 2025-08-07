@@ -9,7 +9,7 @@ using namespace std;
 
 class Guloso {
     public:
-        Guloso(bool dir, bool pond_arestas, bool pond_vertices, int ordem);
+        Guloso();
         ~Guloso();
 
         //TRUE -> 'b' tem maior prioridade (vai para o topo)
