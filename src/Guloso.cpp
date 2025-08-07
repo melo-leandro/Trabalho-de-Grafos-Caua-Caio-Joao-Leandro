@@ -66,36 +66,38 @@ vector<char> Guloso::algoritmo_guloso_adaptativo(Grafo &grafo) {
             return {};
 
         vector<char> solucao;                    // Conjunto dominante final
-        set<char> nos_usados;                   // Nós já incluídos na solução
-        set<char> vertices_dominados;           // Vértices já dominados
+        set<char> nos_usados;                    // Nós já incluídos na solução
+        set<char> vertices_dominados;            // Vértices já dominados
         
         while(true) {
             No* melhor_candidato = nullptr;
-            float melhor_beneficio = 0;
+            float melhor_beneficio = 0.0;
             
             // Avalia todos os nós não utilizados
             for(No* no : grafo.get_lista_adj()) {
-                if(nos_usados.find(no->get_id()) != nos_usados.end())
+                if(nos_usados.count(no->get_id()))  // count() é mais eficiente que find() != end()
                     continue;
                 
-                set<char> vertices_dominados_por_este;
-                vertices_dominados_por_este.insert(no->get_id());
+                // Calcula domínio potencial uma única vez
+                set<char> dominio_potencial;
+                dominio_potencial.insert(no->get_id());
                 for(Aresta* aresta : no->get_arestas())
-                    vertices_dominados_por_este.insert(aresta->get_id_destino());
-                
-                // Calcula quantos novos vértices seriam dominados
+                    dominio_potencial.insert(aresta->get_id_destino());
+
+                // Conta novos vértices que seriam dominados
                 int novos_dominados = 0;
-                for(char v : vertices_dominados_por_este) {
-                    if(vertices_dominados.find(v) == vertices_dominados.end()) {
+                for(char v : dominio_potencial) {
+                    if(!vertices_dominados.count(v)) {  // count() mais eficiente
                         novos_dominados++;
                     }
                 }
                 
-                // Critério de eficiência: vértices dominados por unidade de peso
-                float beneficio = 0;
-                if(novos_dominados > 0 && no->get_peso() > 0) {
-                    beneficio = (float)novos_dominados / no->get_peso();
-                }
+                // Early exit se não domina novos vértices
+                if(novos_dominados == 0 || no->get_peso() <= 0)
+                    continue;
+                
+                // Critério de eficiência otimizado
+                float beneficio = (float)novos_dominados / no->get_peso();
                 
                 if(beneficio > melhor_beneficio) {
                     melhor_beneficio = beneficio;
@@ -111,15 +113,10 @@ vector<char> Guloso::algoritmo_guloso_adaptativo(Grafo &grafo) {
             solucao.push_back(melhor_candidato->get_id());
             nos_usados.insert(melhor_candidato->get_id());
             
-            // Atualiza vértices dominados
-            set<char> vertices_dominados_por_este;
-            vertices_dominados_por_este.insert(melhor_candidato->get_id());
+            // Atualiza vértices dominados (reutiliza cálculo)
+            vertices_dominados.insert(melhor_candidato->get_id());
             for(Aresta* aresta : melhor_candidato->get_arestas())
-                vertices_dominados_por_este.insert(aresta->get_id_destino());
-            
-            for (char v : vertices_dominados_por_este) {
-                vertices_dominados.insert(v);
-            }
+                vertices_dominados.insert(aresta->get_id_destino());
         }
 
     return solucao;
