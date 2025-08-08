@@ -1,8 +1,9 @@
-#include <iostream>
 #include "Gerenciador.h"
+
 using namespace std;
 
 int main(int argc, char *argv[]) {
+    srand(time(nullptr));
     
     Grafo* grafo = Gerenciador::carregar_informacoes_entrada(argv[1]);
 

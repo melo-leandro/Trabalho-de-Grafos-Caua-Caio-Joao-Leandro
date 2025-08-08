@@ -250,12 +250,13 @@ void Gerenciador::comandos(Grafo* grafo) {
             cin >> res;
             switch(res) {
                 case 'a': {
-                    vector<char> solucao = Guloso::algoritmo_guloso_adaptativo(*grafo);
+                    auto [solucao, peso_total] = Guloso::algoritmo_guloso_adaptativo(*grafo);
                     
-                    cout << "Solução do algoritmo guloso: ";
+                    cout << "Solução do algoritmo guloso adaptativo: ";
                     for(char id : solucao) {
                         cout << id << (id != solucao.back() ? ", " : "\n");
                     }
+                    cout << "Peso total da solução: " << peso_total << "\n";
 
                     break;
                 }
