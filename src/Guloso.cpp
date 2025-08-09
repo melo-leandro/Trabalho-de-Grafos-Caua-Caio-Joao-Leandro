@@ -154,7 +154,8 @@ pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float al
         
         if (LRC.empty()) break;
         
-        // Escolha aleatória
+        // Escolha aleatória com verificação de segurança
+        if (LRC.size() == 0) break;  // Verificação dupla de segurança
         No* escolhido = LRC[rand() % LRC.size()];
         
         // Atualiza solução
@@ -292,6 +293,10 @@ void Guloso::executar_experimentos(Grafo &grafo, const string& nome_instancia, c
     vector<vector<char>> solucoes_adaptativo;  // Para armazenar as soluções
     vector<vector<float>> tempos_randomizado(3), pesos_randomizado(3);
     vector<vector<vector<char>>> solucoes_randomizado(3);  // Para armazenar soluções por alpha
+    // Inicializa cada vetor de soluções para cada alpha
+    for(int i = 0; i < 3; ++i) {
+        solucoes_randomizado[i].reserve(NUM_EXECUCOES);
+    }
     vector<float> tempos_reativo, pesos_reativo;
     vector<vector<char>> solucoes_reativo;  // Para armazenar as soluções
     
@@ -410,7 +415,10 @@ void Guloso::executar_experimentos(Grafo &grafo, const string& nome_instancia, c
     // Encontra a melhor solução do adaptativo
     auto it_adap = min_element(pesos_adaptativo.begin(), pesos_adaptativo.end());
     int idx_melhor_adap = distance(pesos_adaptativo.begin(), it_adap);
-    vector<char> melhor_sol_adap = solucoes_adaptativo[idx_melhor_adap];
+    vector<char> melhor_sol_adap;
+    if (!pesos_adaptativo.empty() && idx_melhor_adap < static_cast<int>(solucoes_adaptativo.size())) {
+        melhor_sol_adap = solucoes_adaptativo[idx_melhor_adap];
+    }
     
     arquivo << "\n1. ALGORITMO GULOSO ADAPTATIVO:" << endl;
     arquivo << "   Melhor peso: " << melhor_peso_adap << endl;
@@ -434,7 +442,11 @@ void Guloso::executar_experimentos(Grafo &grafo, const string& nome_instancia, c
         // Encontra a melhor solução para este alpha
         auto it_rand = min_element(pesos_randomizado[alpha_idx].begin(), pesos_randomizado[alpha_idx].end());
         int idx_melhor_rand = distance(pesos_randomizado[alpha_idx].begin(), it_rand);
-        vector<char> melhor_sol_rand = solucoes_randomizado[alpha_idx][idx_melhor_rand];
+        vector<char> melhor_sol_rand;
+        if (!pesos_randomizado[alpha_idx].empty() && 
+            idx_melhor_rand < static_cast<int>(solucoes_randomizado[alpha_idx].size())) {
+            melhor_sol_rand = solucoes_randomizado[alpha_idx][idx_melhor_rand];
+        }
         
         melhor_global_randomizado = min(melhor_global_randomizado, melhor_peso_rand);
         
@@ -457,7 +469,10 @@ void Guloso::executar_experimentos(Grafo &grafo, const string& nome_instancia, c
     // Encontra a melhor solução do reativo
     auto it_reat = min_element(pesos_reativo.begin(), pesos_reativo.end());
     int idx_melhor_reat = distance(pesos_reativo.begin(), it_reat);
-    vector<char> melhor_sol_reat = solucoes_reativo[idx_melhor_reat];
+    vector<char> melhor_sol_reat;
+    if (!pesos_reativo.empty() && idx_melhor_reat < static_cast<int>(solucoes_reativo.size())) {
+        melhor_sol_reat = solucoes_reativo[idx_melhor_reat];
+    }
     
     arquivo << "\n3. ALGORITMO GULOSO RANDOMIZADO REATIVO:" << endl;
     arquivo << "   Alphas utilizados: {" << alphas_reativo[0] << ", " << alphas_reativo[1] << ", " << alphas_reativo[2] << "}" << endl;
