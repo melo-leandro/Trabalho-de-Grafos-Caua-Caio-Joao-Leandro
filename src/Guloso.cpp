@@ -5,6 +5,11 @@
 #include <cfloat>
 #include <cstdlib>
 #include <ctime>
+#include <chrono>
+#include <fstream>
+#include <iomanip>
+#include <numeric>
+#include <algorithm>
 
 using namespace std;
 
@@ -266,4 +271,225 @@ pair<vector<char>, float> Guloso::guloso_randomizado_reativo(Grafo &grafo, float
     }
     
     return {melhor_solucao, melhor_peso};
+}   
+
+// Função para experimentos científicos - executa todos os algoritmos e gera relatório
+void Guloso::executar_experimentos(Grafo &grafo, const string& nome_instancia, const string& arquivo_saida) {
+    using namespace chrono;
+    
+    // Configurações dos experimentos conforme especificação
+    const int NUM_EXECUCOES = 10;
+    const int ITER_RANDOMIZADO = 30;
+    const int ITER_REATIVO = 300;
+    const int BLOCO_REATIVO = 40;
+    
+    // Valores de alpha escolhidos estrategicamente
+    float alphas_randomizado[3] = {0.1f, 0.5f, 0.9f};  // Guloso, Balanceado, Aleatório
+    float alphas_reativo[3] = {0.1f, 0.5f, 0.9f};      // Mesmos valores para comparação
+    
+    // Estruturas para armazenar resultados
+    vector<float> tempos_adaptativo, pesos_adaptativo;
+    vector<vector<char>> solucoes_adaptativo;  // Para armazenar as soluções
+    vector<vector<float>> tempos_randomizado(3), pesos_randomizado(3);
+    vector<vector<vector<char>>> solucoes_randomizado(3);  // Para armazenar soluções por alpha
+    vector<float> tempos_reativo, pesos_reativo;
+    vector<vector<char>> solucoes_reativo;  // Para armazenar as soluções
+    
+    cout << "=== INICIANDO EXPERIMENTOS PARA: " << nome_instancia << " ===" << endl;
+    
+    // ========== ALGORITMO GULOSO ADAPTATIVO (10 execuções) ==========
+    cout << "\n1. Testando Algoritmo Guloso Adaptativo..." << endl;
+    for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+        auto inicio = high_resolution_clock::now();
+        auto [solucao, peso] = algoritmo_guloso_adaptativo(grafo);
+        auto fim = high_resolution_clock::now();
+        
+        auto duracao = duration_cast<microseconds>(fim - inicio);
+        double tempo_segundos = duracao.count() / 1000000.0;
+        
+        tempos_adaptativo.push_back(tempo_segundos);
+        pesos_adaptativo.push_back(peso);
+        solucoes_adaptativo.push_back(solucao);  // Armazena a solução
+        
+        cout << "   Execução " << setw(2) << (exec + 1) << ": Peso=" << setw(8) << peso 
+             << ", Tempo=" << fixed << setprecision(6) << tempo_segundos << "s"
+             << ", Solução={";
+        for(size_t i = 0; i < solucao.size(); ++i) {
+            cout << solucao[i];
+            if(i < solucao.size() - 1) cout << ", ";
+        }
+        cout << "}" << endl;
+    }
+    
+    // ========== ALGORITMO GULOSO RANDOMIZADO (30 iterações por execução) ==========
+    cout << "\n2. Testando Algoritmo Guloso Randomizado (" << ITER_RANDOMIZADO << " iterações)..." << endl;
+    for (int alpha_idx = 0; alpha_idx < 3; ++alpha_idx) {
+        float alpha = alphas_randomizado[alpha_idx];
+        cout << "   Alpha = " << alpha << ":" << endl;
+        
+        for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+            auto inicio = high_resolution_clock::now();
+            auto [solucao, peso] = guloso_randomizado(grafo, alpha, ITER_RANDOMIZADO);
+            auto fim = high_resolution_clock::now();
+            
+            auto duracao = duration_cast<microseconds>(fim - inicio);
+            double tempo_segundos = duracao.count() / 1000000.0;
+            
+            tempos_randomizado[alpha_idx].push_back(tempo_segundos);
+            pesos_randomizado[alpha_idx].push_back(peso);
+            solucoes_randomizado[alpha_idx].push_back(solucao);  // Armazena a solução
+            
+            cout << "     Execução " << setw(2) << (exec + 1) << ": Peso=" << setw(8) << peso 
+                 << ", Tempo=" << fixed << setprecision(6) << tempo_segundos << "s"
+                 << ", Solução={";
+            for(size_t i = 0; i < solucao.size(); ++i) {
+                cout << solucao[i];
+                if(i < solucao.size() - 1) cout << ", ";
+            }
+            cout << "}" << endl;
+        }
+    }
+    
+    // ========== ALGORITMO GULOSO RANDOMIZADO REATIVO (300 iterações) ==========
+    cout << "\n3. Testando Algoritmo Guloso Randomizado Reativo (" << ITER_REATIVO << " iterações, bloco=" << BLOCO_REATIVO << ")..." << endl;
+    for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+        auto inicio = high_resolution_clock::now();
+        auto [solucao, peso] = guloso_randomizado_reativo(grafo, alphas_reativo, ITER_REATIVO, BLOCO_REATIVO);
+        auto fim = high_resolution_clock::now();
+        
+        auto duracao = duration_cast<microseconds>(fim - inicio);
+        double tempo_segundos = duracao.count() / 1000000.0;
+        
+        tempos_reativo.push_back(tempo_segundos);
+        pesos_reativo.push_back(peso);
+        solucoes_reativo.push_back(solucao);  // Armazena a solução
+        
+        cout << "   Execução " << setw(2) << (exec + 1) << ": Peso=" << setw(8) << peso 
+             << ", Tempo=" << fixed << setprecision(6) << tempo_segundos << "s"
+             << ", Solução={";
+        for(size_t i = 0; i < solucao.size(); ++i) {
+            cout << solucao[i];
+            if(i < solucao.size() - 1) cout << ", ";
+        }
+        cout << "}" << endl;
+    }
+    
+    // ========== GERAÇÃO DO RELATÓRIO EM ARQUIVO ==========
+    ofstream arquivo(arquivo_saida, ios::app);
+    if (!arquivo.is_open()) {
+        cerr << "ERRO: Não foi possível abrir o arquivo: " << arquivo_saida << endl;
+        return;
+    }
+    
+    // Função auxiliar para calcular estatísticas
+    auto calcular_stats = [](const vector<float>& dados) -> tuple<float, float, float> {
+        if (dados.empty()) return {0.0f, 0.0f, 0.0f};
+        
+        float melhor = *min_element(dados.begin(), dados.end());
+        float soma = accumulate(dados.begin(), dados.end(), 0.0f);
+        float media = soma / dados.size();
+        
+        return {melhor, media, soma};
+    };
+    
+    // Cabeçalho do relatório
+    arquivo << "=======================================================" << endl;
+    arquivo << "           RESULTADOS EXPERIMENTAIS" << endl;
+    arquivo << "=======================================================" << endl;
+    arquivo << "Instância: " << nome_instancia << endl;
+    arquivo << "Data: " << __DATE__ << " às " << __TIME__ << endl;
+    arquivo << "Execuções por algoritmo: " << NUM_EXECUCOES << endl;
+    arquivo << "Iterações randomizado: " << ITER_RANDOMIZADO << endl;
+    arquivo << "Iterações reativo: " << ITER_REATIVO << " (bloco=" << BLOCO_REATIVO << ")" << endl;
+    arquivo << "-------------------------------------------------------" << endl;
+    
+    // Resultados do Algoritmo Guloso Adaptativo
+    auto [melhor_peso_adap, media_peso_adap, _] = calcular_stats(pesos_adaptativo);
+    auto [__, media_tempo_adap, ___] = calcular_stats(tempos_adaptativo);
+    
+    // Encontra a melhor solução do adaptativo
+    auto it_adap = min_element(pesos_adaptativo.begin(), pesos_adaptativo.end());
+    int idx_melhor_adap = distance(pesos_adaptativo.begin(), it_adap);
+    vector<char> melhor_sol_adap = solucoes_adaptativo[idx_melhor_adap];
+    
+    arquivo << "\n1. ALGORITMO GULOSO ADAPTATIVO:" << endl;
+    arquivo << "   Melhor peso: " << melhor_peso_adap << endl;
+    arquivo << "   Melhor solução: {";
+    for(size_t i = 0; i < melhor_sol_adap.size(); ++i) {
+        arquivo << melhor_sol_adap[i];
+        if(i < melhor_sol_adap.size() - 1) arquivo << ", ";
+    }
+    arquivo << "}" << endl;
+    arquivo << "   Peso médio: " << fixed << setprecision(3) << media_peso_adap << endl;
+    arquivo << "   Tempo médio: " << fixed << setprecision(6) << media_tempo_adap << "s" << endl;
+    
+    // Resultados do Algoritmo Randomizado
+    arquivo << "\n2. ALGORITMO GULOSO RANDOMIZADO:" << endl;
+    float melhor_global_randomizado = FLT_MAX;
+    for (int alpha_idx = 0; alpha_idx < 3; ++alpha_idx) {
+        float alpha = alphas_randomizado[alpha_idx];
+        auto [melhor_peso_rand, media_peso_rand, ____] = calcular_stats(pesos_randomizado[alpha_idx]);
+        auto [_____, media_tempo_rand, ______] = calcular_stats(tempos_randomizado[alpha_idx]);
+        
+        // Encontra a melhor solução para este alpha
+        auto it_rand = min_element(pesos_randomizado[alpha_idx].begin(), pesos_randomizado[alpha_idx].end());
+        int idx_melhor_rand = distance(pesos_randomizado[alpha_idx].begin(), it_rand);
+        vector<char> melhor_sol_rand = solucoes_randomizado[alpha_idx][idx_melhor_rand];
+        
+        melhor_global_randomizado = min(melhor_global_randomizado, melhor_peso_rand);
+        
+        arquivo << "   Alpha " << alpha << ":" << endl;
+        arquivo << "     Melhor peso: " << melhor_peso_rand << endl;
+        arquivo << "     Melhor solução: {";
+        for(size_t i = 0; i < melhor_sol_rand.size(); ++i) {
+            arquivo << melhor_sol_rand[i];
+            if(i < melhor_sol_rand.size() - 1) arquivo << ", ";
+        }
+        arquivo << "}" << endl;
+        arquivo << "     Peso médio: " << fixed << setprecision(3) << media_peso_rand << endl;
+        arquivo << "     Tempo médio: " << fixed << setprecision(6) << media_tempo_rand << "s" << endl;
+    }
+    
+    // Resultados do Algoritmo Reativo
+    auto [melhor_peso_reat, media_peso_reat, _______] = calcular_stats(pesos_reativo);
+    auto [________, media_tempo_reat, _________] = calcular_stats(tempos_reativo);
+    
+    // Encontra a melhor solução do reativo
+    auto it_reat = min_element(pesos_reativo.begin(), pesos_reativo.end());
+    int idx_melhor_reat = distance(pesos_reativo.begin(), it_reat);
+    vector<char> melhor_sol_reat = solucoes_reativo[idx_melhor_reat];
+    
+    arquivo << "\n3. ALGORITMO GULOSO RANDOMIZADO REATIVO:" << endl;
+    arquivo << "   Alphas utilizados: {" << alphas_reativo[0] << ", " << alphas_reativo[1] << ", " << alphas_reativo[2] << "}" << endl;
+    arquivo << "   Melhor peso: " << melhor_peso_reat << endl;
+    arquivo << "   Melhor solução: {";
+    for(size_t i = 0; i < melhor_sol_reat.size(); ++i) {
+        arquivo << melhor_sol_reat[i];
+        if(i < melhor_sol_reat.size() - 1) arquivo << ", ";
+    }
+    arquivo << "}" << endl;
+    arquivo << "   Peso médio: " << fixed << setprecision(3) << media_peso_reat << endl;
+    arquivo << "   Tempo médio: " << fixed << setprecision(6) << media_tempo_reat << "s" << endl;
+    
+    // Resumo comparativo
+    arquivo << "\n======== RESUMO COMPARATIVO ========" << endl;
+    arquivo << "Melhor solução por algoritmo:" << endl;
+    arquivo << "  Guloso Adaptativo: " << melhor_peso_adap << endl;
+    arquivo << "  Guloso Randomizado: " << melhor_global_randomizado << endl;
+    arquivo << "  Guloso Reativo: " << melhor_peso_reat << endl;
+    
+    // Determina o vencedor
+    float melhor_absoluto = min({melhor_peso_adap, melhor_global_randomizado, melhor_peso_reat});
+    arquivo << "\nMELHOR RESULTADO GERAL: " << melhor_absoluto;
+    if (melhor_absoluto == melhor_peso_adap) arquivo << " (Guloso Adaptativo)";
+    else if (melhor_absoluto == melhor_global_randomizado) arquivo << " (Guloso Randomizado)";
+    else arquivo << " (Guloso Reativo)";
+    arquivo << endl;
+    
+    arquivo << "\n" << string(55, '=') << "\n" << endl;
+    arquivo.close();
+    
+    cout << "\n=== EXPERIMENTOS CONCLUÍDOS ===" << endl;
+    cout << "Resultados detalhados salvos em: " << arquivo_saida << endl;
+    cout << "Melhor resultado encontrado: " << melhor_absoluto << endl;
 }   

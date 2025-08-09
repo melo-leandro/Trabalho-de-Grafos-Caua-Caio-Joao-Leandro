@@ -23,6 +23,9 @@ class Guloso {
         static pair<vector<char>, float> algoritmo_guloso_adaptativo(Grafo &grafo);
         static pair<vector<char>, float> guloso_randomizado(Grafo &grafo, float alpha, int n_iteracoes);
         static pair<vector<char>, float> guloso_randomizado_reativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco);
+        
+        // Função para experimentos científicos
+        static void executar_experimentos(Grafo &grafo, const string& nome_instancia, const string& arquivo_saida);
 
     private:
         static pair<vector<char>, float> construir_solucao_grasp(Grafo &grafo, float alpha);
