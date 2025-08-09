@@ -242,7 +242,7 @@ void Gerenciador::comandos(Grafo* grafo) {
             cout<<"Digite uma das opcoes abaixo e pressione enter:"<<endl<<endl;
             cout<<"(a) Algoritmo Guloso Tradicional;"<<endl;
             cout<<"(b) Algoritmo Guloso Randomizado;"<<endl;
-            cout<<"(c) Algoritmo Guloso Randomizado Adaptativo;"<<endl;
+            cout<<"(c) Algoritmo Guloso Randomizado Reativo;"<<endl;
             cout<<"(0) Voltar ao menu principal;"<<endl<<endl;
             
 
@@ -257,19 +257,49 @@ void Gerenciador::comandos(Grafo* grafo) {
                         cout << id << (id != solucao.back() ? ", " : "\n");
                     }
                     cout << "Peso total da solução: " << peso_total << "\n";
-
                     break;
                 }
 
                 case 'b': {
-                    cout<<"Algoritmo Guloso Randomizado"<<endl;
-                    // Implementar o algoritmo guloso randomizado aqui
+                    cout << "Algoritmo Guloso Randomizado" << endl;
+                    cout << "Digite o valor de alpha (0.0 a 1.0): ";
+                    float alpha;
+                    cin >> alpha;
+                    
+                    cout << "Digite o número de iterações: ";
+                    int n_iteracoes;
+                    cin >> n_iteracoes;
+                    
+                    auto [solucao, peso_total] = Guloso::guloso_randomizado(*grafo, alpha, n_iteracoes);
+                    
+                    cout << "Solução do algoritmo guloso randomizado: ";
+                    for(char id : solucao) {
+                        cout << id << (id != solucao.back() ? ", " : "\n");
+                    }
+                    cout << "Peso total da solução: " << peso_total << "\n";
                     break;
                 }
 
                 case 'c': {
-                    cout<<"Algoritmo Guloso Randomizado Adaptativo"<<endl;
-                    // Implementar o algoritmo guloso randomizado adaptativo aqui
+                    cout << "Algoritmo Guloso Randomizado Reativo" << endl;
+                    cout << "Digite o número de iterações: ";
+                    int n_iteracoes;
+                    cin >> n_iteracoes;
+                    
+                    cout << "Digite o tamanho do bloco: ";
+                    int bloco;
+                    cin >> bloco;
+                    
+                    // Valores padrão de alpha para GRASP reativo
+                    float alpha_valores[3] = {0.1f, 0.3f, 0.5f};
+                    
+                    auto [solucao, peso_total] = Guloso::guloso_randomizado_reativo(*grafo, alpha_valores, n_iteracoes, bloco);
+                    
+                    cout << "Solução do algoritmo guloso randomizado reativo: ";
+                    for(char id : solucao) {
+                        cout << id << (id != solucao.back() ? ", " : "\n");
+                    }
+                    cout << "Peso total da solução: " << peso_total << "\n";
                     break;
                 }
 

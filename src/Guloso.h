@@ -20,10 +20,9 @@ class Guloso {
             }
         };
 
-        static vector<char> algoritmo_guloso(Grafo &grafo);
         static pair<vector<char>, float> algoritmo_guloso_adaptativo(Grafo &grafo);
-        static vector<char> guloso_randomizado(Grafo &grafo, float alpha, int n_iteracoes);
-        static vector<char> guloso_randomizado_reativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco);
+        static pair<vector<char>, float> guloso_randomizado(Grafo &grafo, float alpha, int n_iteracoes);
+        static pair<vector<char>, float> guloso_randomizado_reativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco);
 
     private:
         static pair<vector<char>, float> construir_solucao_grasp(Grafo &grafo, float alpha);

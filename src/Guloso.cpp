@@ -1,6 +1,5 @@
 #include "Guloso.h"
 #include <vector>
-#include <queue>
 #include <set>
 #include <climits>
 #include <cfloat>
@@ -13,7 +12,6 @@ Guloso::Guloso() {}
 
 Guloso::~Guloso() {}
 
-// Algoritmo Guloso Adaptativo
 pair<vector<char>, float> Guloso::algoritmo_guloso_adaptativo(Grafo &grafo) {
         if(grafo.get_lista_adj().empty())
             return {{}, 0.0f};
@@ -61,7 +59,7 @@ pair<vector<char>, float> Guloso::algoritmo_guloso_adaptativo(Grafo &grafo) {
                 if(novos_dominados == 0)
                     continue;
                 
-                // Critério de eficiência otimizado
+                // Critério de eficiência otimizado - peso já verificado como > 0
                 float beneficio = (float)novos_dominados / no->get_peso();
                 
                 if(beneficio > melhor_beneficio) {
@@ -91,7 +89,7 @@ pair<vector<char>, float> Guloso::algoritmo_guloso_adaptativo(Grafo &grafo) {
 // Método auxiliar para construção dos randomizados
 pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float alpha) {
     if (grafo.get_lista_adj().empty() || alpha < 0.0f || alpha > 1.0f)
-        return {{}, FLT_MAX};  // Retorna solução inválida
+        return {{}, 0.0f};  // Padronizado: erro retorna peso 0
         
     vector<char> solucao;
     set<char> nos_usados;
@@ -129,6 +127,7 @@ pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float al
             
             if (novos == 0) continue;
             
+            // Peso já verificado como > 0 pela condição anterior
             float beneficio = (float)novos / no->get_peso();
             candidatos.push_back({no, beneficio});
             
@@ -167,10 +166,9 @@ pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float al
     return {solucao, peso_total};
 }
 
-// Algoritmo Guloso Randomizado
-vector<char> Guloso::guloso_randomizado(Grafo &grafo, float alpha, int n_iteracoes) {
+pair<vector<char>, float> Guloso::guloso_randomizado(Grafo &grafo, float alpha, int n_iteracoes) {
     if (grafo.get_lista_adj().empty() || n_iteracoes <= 0 || alpha < 0.0f || alpha > 1.0f)
-        return {};
+        return {{}, 0.0f};
         
     vector<char> melhor_solucao;
     float melhor_peso = FLT_MAX;
@@ -178,49 +176,78 @@ vector<char> Guloso::guloso_randomizado(Grafo &grafo, float alpha, int n_iteraco
     for (int iter = 0; iter < n_iteracoes; ++iter) {
         auto [solucao, peso_total] = construir_solucao_grasp(grafo, alpha);
         
-        // Atualiza melhor solução se válida e melhor
         if (!solucao.empty() && peso_total < melhor_peso) {
             melhor_peso = peso_total;
             melhor_solucao = solucao;
         }
     }
     
-    return melhor_solucao;
+    return {melhor_solucao, melhor_peso};
 }
 
-// Algoritmo Guloso Randomizado Adaptativo
-vector<char> Guloso::guloso_randomizado_reativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco) {
-    if (grafo.get_lista_adj().empty() || alpha == nullptr || n_iteracoes <= 0 || bloco <= 0 || bloco >= n_iteracoes)
-        return {};
-        
-    int num_alphas = 10;
+pair<vector<char>, float> Guloso::guloso_randomizado_reativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco) {
+    if (grafo.get_lista_adj().empty() || alpha == nullptr || n_iteracoes <= 0 || bloco <= 0 || bloco > n_iteracoes)
+        return {{}, 0.0f};
+    
+    int num_alphas = 3;
     vector<int> contador(num_alphas, 0);
     vector<float> qualidade_total(num_alphas, 0.0);
+    vector<float> probabilidades(num_alphas, 1.0f / num_alphas);
     
     vector<char> melhor_solucao;
     float melhor_peso = FLT_MAX;
     
     for (int iter = 0; iter < n_iteracoes; ++iter) {
-        // Escolhe alpha (inicialmente aleatório, depois baseado em qualidade)
-        int alpha_idx = rand() % num_alphas;
-        
-        if (iter >= bloco) {
-            float melhor_media = -1.0;
-            for (int i = 0; i < num_alphas; ++i) {
-                if (contador[i] > 0) {
-                    float media = qualidade_total[i] / contador[i];
-                    if (media > melhor_media) {
-                        melhor_media = media;
-                        alpha_idx = i;
+        // Atualiza probabilidades a cada bloco (mudança significativa)
+        if ((iter + 1) % bloco == 0) {
+            float soma_qualidades = 0.0f;
+            for (int j = 0; j < num_alphas; ++j) {
+                if (contador[j] > 0) {
+                    float media = qualidade_total[j] / contador[j];
+                    soma_qualidades += media;
+                }
+            }
+            
+            // Recalcula probabilidades baseado na qualidade
+            if (soma_qualidades > 0.0f) {
+                for (int j = 0; j < num_alphas; ++j) {
+                    if (contador[j] > 0) {
+                        float media = qualidade_total[j] / contador[j];
+                        probabilidades[j] = media / soma_qualidades;
+                    } else {
+                        probabilidades[j] = 0.0f;
                     }
+                }
+            } else {
+                // Se nenhum alpha teve sucesso, reinicia equiprovável
+                for (int j = 0; j < num_alphas; ++j) {
+                    probabilidades[j] = 1.0f / num_alphas;
                 }
             }
         }
         
-        float alpha_atual = alpha[alpha_idx];
+        // Seleção probabilística de alpha com fallback
+        float rand_val = (float)rand() / RAND_MAX;
+        int alpha_idx = 0;
+        float acumulado = 0.0f;
+        bool alpha_selecionado = false;
         
-        // Executa GRASP com alpha escolhido
-        auto [solucao, peso_total] = construir_solucao_grasp(grafo, alpha_atual);
+        for (int j = 0; j < num_alphas; ++j) {
+            acumulado += probabilidades[j];
+            if (rand_val <= acumulado) {
+                alpha_idx = j;
+                alpha_selecionado = true;
+                break;
+            }
+        }
+        
+        // Fallback: se algo deu errado, escolhe aleatoriamente
+        if (!alpha_selecionado) {
+            alpha_idx = rand() % num_alphas;
+        }
+        
+        // Executa GRASP
+        auto [solucao, peso_total] = construir_solucao_grasp(grafo, alpha[alpha_idx]);
         
         // Atualiza melhor solução e estatísticas
         if (!solucao.empty()) {
@@ -230,7 +257,6 @@ vector<char> Guloso::guloso_randomizado_reativo(Grafo &grafo, float alpha[], int
             }
             
             contador[alpha_idx]++;
-            // Qualidade: peso_total <= 0 indica solução ótima (qualidade muito alta)
             if (peso_total > 0.0f) {
                 qualidade_total[alpha_idx] += 1.0f / peso_total;
             } else {
@@ -239,5 +265,5 @@ vector<char> Guloso::guloso_randomizado_reativo(Grafo &grafo, float alpha[], int
         }
     }
     
-    return melhor_solucao;
+    return {melhor_solucao, melhor_peso};
 }   
