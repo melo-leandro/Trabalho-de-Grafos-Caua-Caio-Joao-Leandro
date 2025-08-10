@@ -94,76 +94,113 @@ pair<vector<char>, float> Guloso::algoritmo_guloso_adaptativo(Grafo &grafo) {
 // Método auxiliar para construção dos randomizados
 pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float alpha) {
     if (grafo.get_lista_adj().empty() || alpha < 0.0f || alpha > 1.0f)
-        return {{}, 0.0f};  // Padronizado: erro retorna peso 0
-        
+        return {{}, 0.0f};
+    
+    // ETAPA 1: INICIALIZAÇÃO DE ESTRUTURAS DE CONTROLE
+    const auto& nos = grafo.get_lista_adj();
+    const int num_nos = nos.size();
+    
+    unordered_set<char> nos_usados;
+    unordered_set<char> nos_dominados;
+    nos_usados.reserve(num_nos);
+    nos_dominados.reserve(num_nos);
+    
     vector<char> solucao;
-    set<char> nos_usados;
-    set<char> vertices_dominados;
+    solucao.reserve(num_nos);
+    
+    vector<pair<No*, float>> candidatos;
+    candidatos.reserve(num_nos);
+    
+    vector<No*> LRC;
+    LRC.reserve(num_nos);
+    
     float peso_total = 0.0;
     
-    while (vertices_dominados.size() < grafo.get_lista_adj().size()) {
-        vector<pair<No*, float>> candidatos;
-        float max_beneficio = 0.0, min_beneficio = FLT_MAX;
+    vector<unordered_set<char>> cache_dominacao(num_nos);
+    for (int i = 0; i < num_nos; ++i) {
+        No* no = nos[i];
+        cache_dominacao[i].insert(no->get_id());
+        for (Aresta* aresta : no->get_arestas()) {
+            cache_dominacao[i].insert(aresta->get_id_destino());
+        }
+    }
+    
+    // ETAPA 2: LOOP DE CONSTRUÇÃO DA POSSÍVEL SOLUÇÃO
+    while (nos_dominados.size() < num_nos) {
+        candidatos.clear();
+        float max_beneficio = 0.0f;
+        float min_beneficio = FLT_MAX;
         
-        // Avalia todos os nós não utilizados
-        for (No* no : grafo.get_lista_adj()) {
-            if (nos_usados.count(no->get_id()))
+        for (int i = 0; i < num_nos; ++i) {
+            No* no = nos[i];
+            
+            if (nos_usados.find(no->get_id()) != nos_usados.end())
                 continue;
             
-            // Nós com peso = 0 são sempre ótimos - inclui imediatamente
-            if(no->get_peso() == 0) {
+            // Inclusão imediata de nós peso zero
+            if (no->get_peso() == 0.0f) {
                 solucao.push_back(no->get_id());
                 nos_usados.insert(no->get_id());
                 peso_total += no->get_peso();
-                vertices_dominados.insert(no->get_id());
-                for (Aresta* aresta : no->get_arestas())
-                    vertices_dominados.insert(aresta->get_id_destino());
+                
+                for (char v : cache_dominacao[i]) {
+                    nos_dominados.insert(v);
+                }
                 continue;
             }
-
-            // Conta novos vértices dominados
+            
+            // Cálculo de novos dominados
             int novos_dominados = 0;
-            if (!vertices_dominados.count(no->get_id())) novos_dominados++;
-            
-            for (Aresta* aresta : no->get_arestas()) {
-                if (!vertices_dominados.count(aresta->get_id_destino()))
+            for (char v : cache_dominacao[i]) {
+                if (nos_dominados.find(v) == nos_dominados.end()) {
                     novos_dominados++;
+                }
             }
-            
             if (novos_dominados == 0) continue;
             
-            // Peso já verificado como > 0 pela condição anterior
+            // Heuristicamente, o benefício é a razão entre novos dominados e peso
             float beneficio = (float)novos_dominados / no->get_peso();
             candidatos.push_back({no, beneficio});
             
+            // Atualizações incrementais de min/max
             if (beneficio > max_beneficio) max_beneficio = beneficio;
             if (beneficio < min_beneficio) min_beneficio = beneficio;
         }
         
         if (candidatos.empty()) break;
         
-        // Constrói Lista Restrita de Candidatos (LRC)
-        vector<No*> LRC;
-        float limite = min_beneficio + alpha * (max_beneficio - min_beneficio);
-        
-        for (auto& par : candidatos) {
-            if (par.second >= limite) {
-                LRC.push_back(par.first);
+        // Construção da LRC
+        LRC.clear();
+        if (max_beneficio == min_beneficio) {
+            for (const auto& candidato : candidatos) {
+                LRC.push_back(candidato.first);
+            }
+        } else {
+            float limite = min_beneficio + alpha * (max_beneficio - min_beneficio);
+            for (const auto& candidato : candidatos) {
+                if (candidato.second >= limite) {
+                    LRC.push_back(candidato.first);
+                }
             }
         }
         
         if (LRC.empty()) break;
-
+        
         No* escolhido = LRC[rand() % LRC.size()];
         
-        // Atualiza solução
+        // Atualização da solução
         solucao.push_back(escolhido->get_id());
         nos_usados.insert(escolhido->get_id());
         peso_total += escolhido->get_peso();
         
-        vertices_dominados.insert(escolhido->get_id());
-        for (Aresta* aresta : escolhido->get_arestas()) {
-            vertices_dominados.insert(aresta->get_id_destino());
+        // Atualização dos dominados
+        for (int i = 0; i < num_nos; ++i) {
+            if (nos[i] == escolhido) {
+                for (char v : cache_dominacao[i]) {
+                    nos_dominados.insert(v);
+                }
+                break;
+            }
         }
     }
     
@@ -483,7 +520,7 @@ void Guloso::executar_experimentos_qualidades(const string& diretorio_instancias
     // Estrutura para armazenar resultados de todas as instâncias
     struct ResultadoInstancia {
         string nome;
-        int num_vertices;
+        int num_nos;
         float melhor_known; // Será preenchido manualmente ou calculado
         float guloso;
         float randomizado_02;
@@ -512,7 +549,7 @@ void Guloso::executar_experimentos_qualidades(const string& diretorio_instancias
         
         ResultadoInstancia resultado;
         resultado.nome = nome_instancia;
-        resultado.num_vertices = grafo->get_lista_adj().size();
+        resultado.num_nos = grafo->get_lista_adj().size();
         resultado.melhor_known = 0; // Será ajustado depois
         
         // ========== ALGORITMO GULOSO ADAPTATIVO ==========
@@ -588,7 +625,7 @@ void Guloso::executar_experimentos_qualidades(const string& diretorio_instancias
         nome_tabela = nome_tabela.substr(0, nome_tabela.find(".txt"));
         
         arquivo << left << setw(20) << nome_tabela
-                << setw(8) << resultado.num_vertices
+                << setw(8) << resultado.num_nos
                 << setw(8) << static_cast<int>(resultado.melhor_known)
                 << setw(8) << static_cast<int>(resultado.guloso)
                 << setw(10) << static_cast<int>(resultado.randomizado_02)
@@ -659,7 +696,7 @@ void Guloso::executar_experimentos_percentuais(const string& diretorio_instancia
     // Estrutura para armazenar resultados de todas as instâncias
     struct ResultadoInstancia {
         string nome;
-        int num_vertices;
+        int num_nos;
         float best_value;
         float guloso;
         float randomizado_02;
@@ -688,7 +725,7 @@ void Guloso::executar_experimentos_percentuais(const string& diretorio_instancia
         
         ResultadoInstancia resultado;
         resultado.nome = nome_instancia;
-        resultado.num_vertices = grafo->get_lista_adj().size();
+        resultado.num_nos = grafo->get_lista_adj().size();
         
         // ========== ALGORITMO GULOSO ADAPTATIVO ==========
         float melhor_guloso = FLT_MAX;
@@ -784,7 +821,7 @@ void Guloso::executar_experimentos_percentuais(const string& diretorio_instancia
         count++;
         
         arquivo << left << setw(20) << nome_tabela
-                << setw(8) << resultado.num_vertices
+                << setw(8) << resultado.num_nos
                 << setw(8) << static_cast<int>(resultado.best_value)
                 << setw(8) << fixed << setprecision(2) << perc_guloso << "%"
                 << setw(10) << fixed << setprecision(2) << perc_rand02 << "%"
@@ -854,7 +891,7 @@ void Guloso::executar_experimentos_tempos(const string& diretorio_instancias, co
     // Estrutura para armazenar tempos de todas as instâncias
     struct TempoInstancia {
         string nome;
-        int num_vertices;
+        int num_nos;
         double melhor_tempo;  // menor tempo encontrado
         double tempo_guloso;
         double tempo_randomizado_02;
@@ -883,7 +920,7 @@ void Guloso::executar_experimentos_tempos(const string& diretorio_instancias, co
         
         TempoInstancia resultado;
         resultado.nome = nome_instancia;
-        resultado.num_vertices = grafo->get_lista_adj().size();
+        resultado.num_nos = grafo->get_lista_adj().size();
         
         // ========== ALGORITMO GULOSO ADAPTATIVO ==========
         double tempo_total_guloso = 0.0;
@@ -986,7 +1023,7 @@ void Guloso::executar_experimentos_tempos(const string& diretorio_instancias, co
         count++;
         
         arquivo << left << setw(20) << nome_tabela
-                << setw(8) << resultado.num_vertices
+                << setw(8) << resultado.num_nos
                 << setw(12) << fixed << setprecision(4) << resultado.melhor_tempo
                 << setw(12) << fixed << setprecision(4) << resultado.tempo_guloso
                 << setw(12) << fixed << setprecision(4) << resultado.tempo_randomizado_02
