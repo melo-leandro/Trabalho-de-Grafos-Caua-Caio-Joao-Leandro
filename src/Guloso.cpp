@@ -9,7 +9,6 @@
 #include <chrono>
 #include <fstream>
 #include <iomanip>
-#include <numeric>
 #include <algorithm>
 
 using namespace std;
@@ -36,8 +35,8 @@ pair<vector<char>, float> Guloso::algoritmo_guloso_adaptativo(Grafo &grafo) {
                 if(nos_usados.count(no->get_id()))
                     continue;
                 
-                // Nós com peso <= 0 são sempre ótimos - inclui imediatamente
-                if(no->get_peso() <= 0) {
+                // Nós com peso == 0 são sempre ótimos - inclui imediatamente
+                if(no->get_peso() == 0) {
                     solucao.push_back(no->get_id());
                     nos_usados.insert(no->get_id());
                     peso_total += no->get_peso();  // Soma peso (pode ser negativo)
@@ -111,8 +110,8 @@ pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float al
             if (nos_usados.count(no->get_id()))
                 continue;
             
-            // Nós com peso <= 0 são sempre ótimos - inclui imediatamente
-            if(no->get_peso() <= 0) {
+            // Nós com peso = 0 são sempre ótimos - inclui imediatamente
+            if(no->get_peso() == 0) {
                 solucao.push_back(no->get_id());
                 nos_usados.insert(no->get_id());
                 peso_total += no->get_peso();
@@ -154,9 +153,7 @@ pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float al
         }
         
         if (LRC.empty()) break;
-        
-        // Escolha aleatória com verificação de segurança
-        if (LRC.size() == 0) break;  // Verificação dupla de segurança
+
         No* escolhido = LRC[rand() % LRC.size()];
         
         // Atualiza solução
@@ -459,7 +456,7 @@ void Guloso::experimentos_melhor_solucao(Grafo &grafo, const string& nome_instan
 }
 
 // Função consolidada para processar todas as instâncias e gerar tabela final
-void Guloso::executar_experimentos_consolidado(const string& diretorio_instancias, const string& arquivo_saida) {
+void Guloso::executar_experimentos_qualidades(const string& diretorio_instancias, const string& arquivo_saida) {
     // Configurações dos experimentos
     const int NUM_EXECUCOES = 10;
     const int ITER_RANDOMIZADO = 30;
@@ -578,10 +575,10 @@ void Guloso::executar_experimentos_consolidado(const string& diretorio_instancia
             << setw(8) << ""
             << setw(8) << ""
             << setw(8) << ""
-            << setw(10) << "alfa=0,2"
-            << setw(10) << "alfa=0,3" 
-            << setw(10) << "alfa=0,4"
-            << setw(12) << "{0,2;0,3;0,4}" << endl;
+            << setw(10) << "alfa=0,25"
+            << setw(10) << "alfa=0,50" 
+            << setw(10) << "alfa=0,75"
+            << setw(12) << "{0,25;0,50;0,75}" << endl;
     arquivo << string(88, '-') << endl;
     
     // Dados da tabela
@@ -621,9 +618,9 @@ void Guloso::executar_experimentos_consolidado(const string& diretorio_instancia
     
     arquivo << "Vitórias por algoritmo:" << endl;
     arquivo << "  Guloso: " << vitorias_guloso << endl;
-    arquivo << "  Randomizado (α=0,2): " << vitorias_rand02 << endl;
-    arquivo << "  Randomizado (α=0,3): " << vitorias_rand03 << endl;
-    arquivo << "  Randomizado (α=0,4): " << vitorias_rand04 << endl;
+    arquivo << "  Randomizado (α=0,25): " << vitorias_rand02 << endl;
+    arquivo << "  Randomizado (α=0,50): " << vitorias_rand03 << endl;
+    arquivo << "  Randomizado (α=0,75): " << vitorias_rand04 << endl;
     arquivo << "  Reativo: " << vitorias_reativo << endl;
     arquivo << "Total de instâncias: " << resultados.size() << endl;
     
@@ -814,15 +811,227 @@ void Guloso::executar_experimentos_percentuais(const string& diretorio_instancia
     arquivo << "=== ANÁLISE ESTATÍSTICA ===" << endl;
     arquivo << "Diferença percentual média por algoritmo:" << endl;
     arquivo << "  Guloso: " << fixed << setprecision(2) << (soma_perc_guloso / count) << "%" << endl;
-    arquivo << "  Randomizado (α=0,2): " << fixed << setprecision(2) << (soma_perc_rand02 / count) << "%" << endl;
-    arquivo << "  Randomizado (α=0,3): " << fixed << setprecision(2) << (soma_perc_rand03 / count) << "%" << endl;
-    arquivo << "  Randomizado (α=0,4): " << fixed << setprecision(2) << (soma_perc_rand04 / count) << "%" << endl;
+    arquivo << "  Randomizado (α=0,25): " << fixed << setprecision(2) << (soma_perc_rand02 / count) << "%" << endl;
+    arquivo << "  Randomizado (α=0,50): " << fixed << setprecision(2) << (soma_perc_rand03 / count) << "%" << endl;
+    arquivo << "  Randomizado (α=0,75): " << fixed << setprecision(2) << (soma_perc_rand04 / count) << "%" << endl;
     arquivo << "  Reativo: " << fixed << setprecision(2) << (soma_perc_reativo / count) << "%" << endl;
     arquivo << "Total de instâncias analisadas: " << count << endl;
     
     arquivo.close();
     
     cout << "\n=== TABELA PERCENTUAL CONCLUÍDA ===" << endl;
+    cout << "Resultados salvos em: " << arquivo_saida << endl;
+    cout << "Instâncias processadas: " << count << endl;
+}
+
+// Função para gerar tabela com tempos de execução
+void Guloso::executar_experimentos_tempos(const string& diretorio_instancias, const string& arquivo_saida) {
+    using namespace chrono;
+    
+    // Configurações dos experimentos
+    const int NUM_EXECUCOES = 10;
+    const int ITER_RANDOMIZADO = 30;
+    const int ITER_REATIVO = 300;
+    const int BLOCO_REATIVO = 40;
+    
+    // Valores de alpha conforme especificação
+    float alphas_randomizado[3] = {0.25f, 0.5f, 0.75f};
+    float alphas_reativo[3] = {0.25f, 0.5f, 0.75f};
+    
+    // Lista de instâncias a processar
+    vector<string> instancias = {
+        "g_25_0.16_0_1_0.txt", "g_25_0.16_0_1_1.txt",
+        "g_25_0.21_0_1_0.txt", "g_25_0.21_0_1_1.txt", 
+        "g_25_0.26_0_1_0.txt", "g_25_0.26_0_1_1.txt",
+        "g_40_0.10_0_1_0.txt", "g_40_0.10_0_1_1.txt",
+        "g_40_0.15_0_1_0.txt", "g_40_0.15_0_1_1.txt",
+        "g_40_0.20_0_1_0.txt", "g_40_0.20_0_1_1.txt",
+        "g_60_0.07_0_1_0.txt", "g_60_0.07_0_1_1.txt",
+        "g_60_0.12_0_1_0.txt", "g_60_0.12_0_1_1.txt",
+        "g_60_0.17_0_1_0.txt", "g_60_0.17_0_1_1.txt"
+    };
+    
+    // Estrutura para armazenar tempos de todas as instâncias
+    struct TempoInstancia {
+        string nome;
+        int num_vertices;
+        double melhor_tempo;  // menor tempo encontrado
+        double tempo_guloso;
+        double tempo_randomizado_02;
+        double tempo_randomizado_03;
+        double tempo_randomizado_04;
+        double tempo_reativo;
+    };
+    
+    vector<TempoInstancia> resultados_tempos;
+    
+    cout << "=== PROCESSANDO INSTÂNCIAS PARA ANÁLISE DE TEMPOS ===" << endl;
+    cout << "Total de instâncias: " << instancias.size() << endl;
+    
+    for (size_t idx = 0; idx < instancias.size(); ++idx) {
+        const string& nome_instancia = instancias[idx];
+        string caminho_completo = diretorio_instancias + "/" + nome_instancia;
+        
+        cout << "\nProcessando (" << (idx + 1) << "/" << instancias.size() << "): " << nome_instancia << endl;
+        
+        // Carregar grafo da instância
+        Grafo* grafo = Gerenciador::carregar_informacoes_entrada(caminho_completo.c_str());
+        if (!grafo) {
+            cout << "ERRO: Não foi possível carregar " << nome_instancia << endl;
+            continue;
+        }
+        
+        TempoInstancia resultado;
+        resultado.nome = nome_instancia;
+        resultado.num_vertices = grafo->get_lista_adj().size();
+        
+        // ========== ALGORITMO GULOSO ADAPTATIVO ==========
+        double tempo_total_guloso = 0.0;
+        for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+            auto inicio = high_resolution_clock::now();
+            auto [solucao, peso] = algoritmo_guloso_adaptativo(*grafo);
+            auto fim = high_resolution_clock::now();
+            
+            auto duracao = duration_cast<microseconds>(fim - inicio);
+            tempo_total_guloso += duracao.count() / 1000000.0;  // converter para segundos
+        }
+        resultado.tempo_guloso = tempo_total_guloso / NUM_EXECUCOES;  // tempo médio
+        
+        // ========== ALGORITMO GULOSO RANDOMIZADO ==========
+        vector<double> tempos_randomizado(3, 0.0);
+        for (int alpha_idx = 0; alpha_idx < 3; ++alpha_idx) {
+            for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+                auto inicio = high_resolution_clock::now();
+                auto [solucao, peso] = guloso_randomizado(*grafo, alphas_randomizado[alpha_idx], ITER_RANDOMIZADO);
+                auto fim = high_resolution_clock::now();
+                
+                auto duracao = duration_cast<microseconds>(fim - inicio);
+                tempos_randomizado[alpha_idx] += duracao.count() / 1000000.0;
+            }
+            tempos_randomizado[alpha_idx] /= NUM_EXECUCOES;  // tempo médio
+        }
+        resultado.tempo_randomizado_02 = tempos_randomizado[0];
+        resultado.tempo_randomizado_03 = tempos_randomizado[1];
+        resultado.tempo_randomizado_04 = tempos_randomizado[2];
+        
+        // ========== ALGORITMO GULOSO RANDOMIZADO REATIVO ==========
+        double tempo_total_reativo = 0.0;
+        for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+            auto inicio = high_resolution_clock::now();
+            auto [solucao, peso] = guloso_randomizado_reativo(*grafo, alphas_reativo, ITER_REATIVO, BLOCO_REATIVO);
+            auto fim = high_resolution_clock::now();
+            
+            auto duracao = duration_cast<microseconds>(fim - inicio);
+            tempo_total_reativo += duracao.count() / 1000000.0;
+        }
+        resultado.tempo_reativo = tempo_total_reativo / NUM_EXECUCOES;  // tempo médio
+        
+        // Define melhor tempo como o menor encontrado
+        resultado.melhor_tempo = min({resultado.tempo_guloso, resultado.tempo_randomizado_02,
+                                     resultado.tempo_randomizado_03, resultado.tempo_randomizado_04,
+                                     resultado.tempo_reativo});
+        
+        resultados_tempos.push_back(resultado);
+        
+        cout << "  Tempos médios (s): Guloso=" << fixed << setprecision(4) << resultado.tempo_guloso
+             << " | Random=" << resultado.tempo_randomizado_02 << ", " << resultado.tempo_randomizado_03 
+             << ", " << resultado.tempo_randomizado_04 << " | Reativo=" << resultado.tempo_reativo << endl;
+        
+        delete grafo;
+    }
+    
+    // ========== GERAÇÃO DA TABELA DE TEMPOS ==========
+    ofstream arquivo(arquivo_saida);
+    if (!arquivo.is_open()) {
+        cerr << "ERRO: Não foi possível criar o arquivo: " << arquivo_saida << endl;
+        return;
+    }
+    
+    // Cabeçalho da tabela
+    arquivo << "Tabela 3: Tempos de execução dos algoritmos (em segundos)" << endl << endl;
+    arquivo << left << setw(20) << "Instancias" 
+            << setw(8) << "#V"
+            << setw(12) << "best(s)"
+            << setw(12) << "Guloso(s)"
+            << setw(36) << "Randomizado"
+            << setw(12) << "Reativo(s)" << endl;
+    arquivo << left << setw(20) << ""
+            << setw(8) << ""
+            << setw(12) << ""
+            << setw(12) << ""
+            << setw(12) << "alfa=0,25"
+            << setw(12) << "alfa=0,50" 
+            << setw(12) << "alfa=0,75"
+            << setw(12) << "{0,25;0,50;0,75}" << endl;
+    arquivo << string(100, '-') << endl;
+    
+    // Variáveis para calcular médias dos tempos
+    double soma_tempo_guloso = 0.0, soma_tempo_rand02 = 0.0, soma_tempo_rand03 = 0.0;
+    double soma_tempo_rand04 = 0.0, soma_tempo_reativo = 0.0, soma_melhor_tempo = 0.0;
+    int count = 0;
+    
+    // Dados da tabela
+    for (const auto& resultado : resultados_tempos) {
+        // Converte nome da instância para o formato da tabela (remove extensão e ajusta)
+        string nome_tabela = resultado.nome;
+        nome_tabela = nome_tabela.substr(0, nome_tabela.find(".txt"));
+        
+        // Acumula para média
+        soma_melhor_tempo += resultado.melhor_tempo;
+        soma_tempo_guloso += resultado.tempo_guloso;
+        soma_tempo_rand02 += resultado.tempo_randomizado_02;
+        soma_tempo_rand03 += resultado.tempo_randomizado_03;
+        soma_tempo_rand04 += resultado.tempo_randomizado_04;
+        soma_tempo_reativo += resultado.tempo_reativo;
+        count++;
+        
+        arquivo << left << setw(20) << nome_tabela
+                << setw(8) << resultado.num_vertices
+                << setw(12) << fixed << setprecision(4) << resultado.melhor_tempo
+                << setw(12) << fixed << setprecision(4) << resultado.tempo_guloso
+                << setw(12) << fixed << setprecision(4) << resultado.tempo_randomizado_02
+                << setw(12) << fixed << setprecision(4) << resultado.tempo_randomizado_03
+                << setw(12) << fixed << setprecision(4) << resultado.tempo_randomizado_04
+                << setw(12) << fixed << setprecision(4) << resultado.tempo_reativo << endl;
+    }
+    
+    // Linha das médias
+    arquivo << string(100, '-') << endl;
+    arquivo << left << setw(20) << "TEMPO MÉDIO (s)"
+            << setw(8) << ""
+            << setw(12) << fixed << setprecision(4) << (soma_melhor_tempo / count)
+            << setw(12) << fixed << setprecision(4) << (soma_tempo_guloso / count)
+            << setw(12) << fixed << setprecision(4) << (soma_tempo_rand02 / count)
+            << setw(12) << fixed << setprecision(4) << (soma_tempo_rand03 / count)
+            << setw(12) << fixed << setprecision(4) << (soma_tempo_rand04 / count)
+            << setw(12) << fixed << setprecision(4) << (soma_tempo_reativo / count) << endl;
+    
+    arquivo << string(100, '-') << endl;
+    arquivo << endl;
+    
+    // Estatísticas de desempenho
+    arquivo << "=== ANÁLISE DE DESEMPENHO TEMPORAL ===" << endl;
+    arquivo << "Tempo médio de execução por algoritmo:" << endl;
+    arquivo << "  Guloso: " << fixed << setprecision(4) << (soma_tempo_guloso / count) << " segundos" << endl;
+    arquivo << "  Randomizado (α=0,25): " << fixed << setprecision(4) << (soma_tempo_rand02 / count) << " segundos" << endl;
+    arquivo << "  Randomizado (α=0,50): " << fixed << setprecision(4) << (soma_tempo_rand03 / count) << " segundos" << endl;
+    arquivo << "  Randomizado (α=0,75): " << fixed << setprecision(4) << (soma_tempo_rand04 / count) << " segundos" << endl;
+    arquivo << "  Reativo: " << fixed << setprecision(4) << (soma_tempo_reativo / count) << " segundos" << endl;
+    arquivo << "Melhor tempo médio: " << fixed << setprecision(4) << (soma_melhor_tempo / count) << " segundos" << endl;
+    
+    // Análise de velocidade relativa
+    double tempo_base = soma_tempo_guloso / count;
+    arquivo << "\nVelocidade relativa ao Guloso:" << endl;
+    arquivo << "  Randomizado (α=0,25): " << fixed << setprecision(2) << ((soma_tempo_rand02 / count) / tempo_base) << "x" << endl;
+    arquivo << "  Randomizado (α=0,50): " << fixed << setprecision(2) << ((soma_tempo_rand03 / count) / tempo_base) << "x" << endl;
+    arquivo << "  Randomizado (α=0,75): " << fixed << setprecision(2) << ((soma_tempo_rand04 / count) / tempo_base) << "x" << endl;
+    arquivo << "  Reativo: " << fixed << setprecision(2) << ((soma_tempo_reativo / count) / tempo_base) << "x" << endl;
+    
+    arquivo << "Total de instâncias analisadas: " << count << endl;
+    
+    arquivo.close();
+    
+    cout << "\n=== ANÁLISE DE TEMPOS CONCLUÍDA ===" << endl;
     cout << "Resultados salvos em: " << arquivo_saida << endl;
     cout << "Instâncias processadas: " << count << endl;
 }   
