@@ -327,7 +327,6 @@ void Gerenciador::comandos(Grafo* grafo) {
 
 }
 
-
 char Gerenciador::get_id_entrada() {
     cout<<"Digite o id de um no: ";
     char id;

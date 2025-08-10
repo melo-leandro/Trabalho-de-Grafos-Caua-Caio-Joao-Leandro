@@ -1,4 +1,5 @@
 #include "Guloso.h"
+#include "Gerenciador.h"
 #include <vector>
 #include <set>
 #include <climits>
@@ -122,18 +123,18 @@ pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float al
             }
 
             // Conta novos vértices dominados
-            int novos = 0;
-            if (!vertices_dominados.count(no->get_id())) novos++;
+            int novos_dominados = 0;
+            if (!vertices_dominados.count(no->get_id())) novos_dominados++;
             
             for (Aresta* aresta : no->get_arestas()) {
                 if (!vertices_dominados.count(aresta->get_id_destino()))
-                    novos++;
+                    novos_dominados++;
             }
             
-            if (novos == 0) continue;
+            if (novos_dominados == 0) continue;
             
             // Peso já verificado como > 0 pela condição anterior
-            float beneficio = (float)novos / no->get_peso();
+            float beneficio = (float)novos_dominados / no->get_peso();
             candidatos.push_back({no, beneficio});
             
             if (beneficio > max_beneficio) max_beneficio = beneficio;
