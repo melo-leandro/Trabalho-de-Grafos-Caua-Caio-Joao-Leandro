@@ -6,11 +6,11 @@ using namespace std;
 int main(int argc, char *argv[]) {
     srand(time(nullptr));
     
-    Grafo* grafo = Gerenciador::carregar_informacoes_entrada(argv[1]);
-    Guloso::executar_experimentos(*grafo, "instancia", "relatorio.txt");
-
-    // Gerenciador::comandos(grafo);
+    // Gera tabela com valores absolutos
+    Guloso::executar_experimentos_consolidado("src/instancias_t2", "src/output/tabela_qualidade.txt");
     
-    delete grafo;
+    // Gera tabela com diferenças percentuais
+    Guloso::executar_experimentos_percentuais("src/instancias_t2", "src/output/tabela_percentual.txt");
+    
     return 0;
 }

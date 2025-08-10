@@ -275,237 +275,554 @@ pair<vector<char>, float> Guloso::guloso_randomizado_reativo(Grafo &grafo, float
     return {melhor_solucao, melhor_peso};
 }   
 
-// Função para experimentos científicos - executa todos os algoritmos e gera relatório
-void Guloso::executar_experimentos(Grafo &grafo, const string& nome_instancia, const string& arquivo_saida) {
-    using namespace chrono;
-    
-    // Configurações dos experimentos conforme especificação
+// Experimentos focados na qualidade da melhor solução (peso total)
+void Guloso::experimentos_melhor_solucao(Grafo &grafo, const string& nome_instancia, const string& arquivo_saida) {
+    // Configurações dos experimentos
     const int NUM_EXECUCOES = 10;
     const int ITER_RANDOMIZADO = 30;
     const int ITER_REATIVO = 300;
     const int BLOCO_REATIVO = 40;
     
-    // Valores de alpha escolhidos estrategicamente
-    float alphas_randomizado[3] = {0.1f, 0.5f, 0.9f};  // Guloso, Balanceado, Aleatório
-    float alphas_reativo[3] = {0.1f, 0.5f, 0.9f};      // Mesmos valores para comparação
+    // Valores de alpha estratégicos
+    float alphas_randomizado[3] = {0.25f, 0.5f, 0.75f};
+    float alphas_reativo[3] = {0.25f, 0.5f, 0.75f};
     
-    // Estruturas para armazenar resultados
-    vector<float> tempos_adaptativo, pesos_adaptativo;
-    vector<vector<char>> solucoes_adaptativo;  // Para armazenar as soluções
-    vector<vector<float>> tempos_randomizado(3), pesos_randomizado(3);
-    vector<vector<vector<char>>> solucoes_randomizado(3);  // Para armazenar soluções por alpha
-    // Inicializa cada vetor de soluções para cada alpha
-    for(int i = 0; i < 3; ++i) {
-        solucoes_randomizado[i].reserve(NUM_EXECUCOES);
-    }
-    vector<float> tempos_reativo, pesos_reativo;
-    vector<vector<char>> solucoes_reativo;  // Para armazenar as soluções
+    // Estruturas para armazenar apenas o melhor resultado de cada algoritmo
+    float melhor_peso_adaptativo = FLT_MAX;
+    vector<char> melhor_solucao_adaptativo;
     
-    cout << "=== INICIANDO EXPERIMENTOS PARA: " << nome_instancia << " ===" << endl;
+    vector<float> melhor_peso_randomizado(3, FLT_MAX);
+    vector<vector<char>> melhor_solucao_randomizado(3);
     
-    // ========== ALGORITMO GULOSO ADAPTATIVO (10 execuções) ==========
-    cout << "\n1. Testando Algoritmo Guloso Adaptativo..." << endl;
+    float melhor_peso_reativo = FLT_MAX;
+    vector<char> melhor_solucao_reativo;
+    
+    cout << "Executando experimentos de melhor solução para: " << nome_instancia << endl;
+    
+    // ========== ALGORITMO GULOSO ADAPTATIVO ==========
+    cout << "1. Algoritmo Guloso Adaptativo..." << endl;
     for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
-        auto inicio = high_resolution_clock::now();
         auto [solucao, peso] = algoritmo_guloso_adaptativo(grafo);
-        auto fim = high_resolution_clock::now();
         
-        auto duracao = duration_cast<microseconds>(fim - inicio);
-        double tempo_segundos = duracao.count() / 1000000.0;
-        
-        tempos_adaptativo.push_back(tempo_segundos);
-        pesos_adaptativo.push_back(peso);
-        solucoes_adaptativo.push_back(solucao);  // Armazena a solução
-        
-        cout << "   Execução " << setw(2) << (exec + 1) << ": Peso=" << setw(8) << peso 
-             << ", Tempo=" << fixed << setprecision(6) << tempo_segundos << "s"
-             << ", Solução={";
-        for(size_t i = 0; i < solucao.size(); ++i) {
-            cout << solucao[i];
-            if(i < solucao.size() - 1) cout << ", ";
+        if (peso < melhor_peso_adaptativo) {
+            melhor_peso_adaptativo = peso;
+            melhor_solucao_adaptativo = solucao;
         }
-        cout << "}" << endl;
     }
     
-    // ========== ALGORITMO GULOSO RANDOMIZADO (30 iterações por execução) ==========
-    cout << "\n2. Testando Algoritmo Guloso Randomizado (" << ITER_RANDOMIZADO << " iterações)..." << endl;
+    // ========== ALGORITMO GULOSO RANDOMIZADO ==========
+    cout << "2. Algoritmo Guloso Randomizado..." << endl;
     for (int alpha_idx = 0; alpha_idx < 3; ++alpha_idx) {
         float alpha = alphas_randomizado[alpha_idx];
-        cout << "   Alpha = " << alpha << ":" << endl;
+        cout << "   Alpha = " << alpha << endl;
         
         for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
-            auto inicio = high_resolution_clock::now();
             auto [solucao, peso] = guloso_randomizado(grafo, alpha, ITER_RANDOMIZADO);
-            auto fim = high_resolution_clock::now();
             
-            auto duracao = duration_cast<microseconds>(fim - inicio);
-            double tempo_segundos = duracao.count() / 1000000.0;
-            
-            tempos_randomizado[alpha_idx].push_back(tempo_segundos);
-            pesos_randomizado[alpha_idx].push_back(peso);
-            solucoes_randomizado[alpha_idx].push_back(solucao);  // Armazena a solução
-            
-            cout << "     Execução " << setw(2) << (exec + 1) << ": Peso=" << setw(8) << peso 
-                 << ", Tempo=" << fixed << setprecision(6) << tempo_segundos << "s"
-                 << ", Solução={";
-            for(size_t i = 0; i < solucao.size(); ++i) {
-                cout << solucao[i];
-                if(i < solucao.size() - 1) cout << ", ";
+            if (peso < melhor_peso_randomizado[alpha_idx]) {
+                melhor_peso_randomizado[alpha_idx] = peso;
+                melhor_solucao_randomizado[alpha_idx] = solucao;
             }
-            cout << "}" << endl;
         }
     }
     
-    // ========== ALGORITMO GULOSO RANDOMIZADO REATIVO (300 iterações) ==========
-    cout << "\n3. Testando Algoritmo Guloso Randomizado Reativo (" << ITER_REATIVO << " iterações, bloco=" << BLOCO_REATIVO << ")..." << endl;
+    // ========== ALGORITMO GULOSO RANDOMIZADO REATIVO ==========
+    cout << "3. Algoritmo Guloso Randomizado Reativo..." << endl;
     for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
-        auto inicio = high_resolution_clock::now();
         auto [solucao, peso] = guloso_randomizado_reativo(grafo, alphas_reativo, ITER_REATIVO, BLOCO_REATIVO);
-        auto fim = high_resolution_clock::now();
         
-        auto duracao = duration_cast<microseconds>(fim - inicio);
-        double tempo_segundos = duracao.count() / 1000000.0;
-        
-        tempos_reativo.push_back(tempo_segundos);
-        pesos_reativo.push_back(peso);
-        solucoes_reativo.push_back(solucao);  // Armazena a solução
-        
-        cout << "   Execução " << setw(2) << (exec + 1) << ": Peso=" << setw(8) << peso 
-             << ", Tempo=" << fixed << setprecision(6) << tempo_segundos << "s"
-             << ", Solução={";
-        for(size_t i = 0; i < solucao.size(); ++i) {
-            cout << solucao[i];
-            if(i < solucao.size() - 1) cout << ", ";
+        if (peso < melhor_peso_reativo) {
+            melhor_peso_reativo = peso;
+            melhor_solucao_reativo = solucao;
         }
-        cout << "}" << endl;
     }
     
-    // ========== GERAÇÃO DO RELATÓRIO EM ARQUIVO ==========
+    // ========== GERAÇÃO DO RELATÓRIO FOCADO NA MELHOR SOLUÇÃO ==========
     ofstream arquivo(arquivo_saida, ios::app);
     if (!arquivo.is_open()) {
         cerr << "ERRO: Não foi possível abrir o arquivo: " << arquivo_saida << endl;
         return;
     }
     
-    // Função auxiliar para calcular estatísticas
-    auto calcular_stats = [](const vector<float>& dados) -> tuple<float, float, float> {
-        if (dados.empty()) return {0.0f, 0.0f, 0.0f};
-        
-        float melhor = *min_element(dados.begin(), dados.end());
-        float soma = accumulate(dados.begin(), dados.end(), 0.0f);
-        float media = soma / dados.size();
-        
-        return {melhor, media, soma};
-    };
-    
     // Cabeçalho do relatório
     arquivo << "=======================================================" << endl;
-    arquivo << "           RESULTADOS EXPERIMENTAIS" << endl;
+    arquivo << "       RELATÓRIO DE MELHORES SOLUÇÕES ENCONTRADAS" << endl;
     arquivo << "=======================================================" << endl;
     arquivo << "Instância: " << nome_instancia << endl;
-    arquivo << "Data: " << __DATE__ << " às " << __TIME__ << endl;
     arquivo << "Execuções por algoritmo: " << NUM_EXECUCOES << endl;
     arquivo << "Iterações randomizado: " << ITER_RANDOMIZADO << endl;
     arquivo << "Iterações reativo: " << ITER_REATIVO << " (bloco=" << BLOCO_REATIVO << ")" << endl;
+    arquivo << "Critério: MELHOR PESO TOTAL encontrado" << endl;
     arquivo << "-------------------------------------------------------" << endl;
     
-    // Resultados do Algoritmo Guloso Adaptativo
-    auto [melhor_peso_adap, media_peso_adap, _] = calcular_stats(pesos_adaptativo);
-    auto [__, media_tempo_adap, ___] = calcular_stats(tempos_adaptativo);
-    
-    // Encontra a melhor solução do adaptativo
-    auto it_adap = min_element(pesos_adaptativo.begin(), pesos_adaptativo.end());
-    int idx_melhor_adap = distance(pesos_adaptativo.begin(), it_adap);
-    vector<char> melhor_sol_adap;
-    if (!pesos_adaptativo.empty() && idx_melhor_adap < static_cast<int>(solucoes_adaptativo.size())) {
-        melhor_sol_adap = solucoes_adaptativo[idx_melhor_adap];
-    }
-    
+    // Resultado do Algoritmo Guloso Adaptativo
     arquivo << "\n1. ALGORITMO GULOSO ADAPTATIVO:" << endl;
-    arquivo << "   Melhor peso: " << melhor_peso_adap << endl;
+    arquivo << "   Melhor peso encontrado: " << melhor_peso_adaptativo << endl;
+    arquivo << "   Tamanho da solução: " << melhor_solucao_adaptativo.size() << " vértices" << endl;
     arquivo << "   Melhor solução: {";
-    for(size_t i = 0; i < melhor_sol_adap.size(); ++i) {
-        arquivo << melhor_sol_adap[i];
-        if(i < melhor_sol_adap.size() - 1) arquivo << ", ";
+    for(size_t i = 0; i < melhor_solucao_adaptativo.size(); ++i) {
+        arquivo << melhor_solucao_adaptativo[i];
+        if(i < melhor_solucao_adaptativo.size() - 1) arquivo << ", ";
     }
     arquivo << "}" << endl;
-    arquivo << "   Peso médio: " << fixed << setprecision(3) << media_peso_adap << endl;
-    arquivo << "   Tempo médio: " << fixed << setprecision(6) << media_tempo_adap << "s" << endl;
     
     // Resultados do Algoritmo Randomizado
     arquivo << "\n2. ALGORITMO GULOSO RANDOMIZADO:" << endl;
     float melhor_global_randomizado = FLT_MAX;
+    int melhor_alpha_idx = 0;
+    
     for (int alpha_idx = 0; alpha_idx < 3; ++alpha_idx) {
         float alpha = alphas_randomizado[alpha_idx];
-        auto [melhor_peso_rand, media_peso_rand, ____] = calcular_stats(pesos_randomizado[alpha_idx]);
-        auto [_____, media_tempo_rand, ______] = calcular_stats(tempos_randomizado[alpha_idx]);
+        float peso = melhor_peso_randomizado[alpha_idx];
         
-        // Encontra a melhor solução para este alpha
-        auto it_rand = min_element(pesos_randomizado[alpha_idx].begin(), pesos_randomizado[alpha_idx].end());
-        int idx_melhor_rand = distance(pesos_randomizado[alpha_idx].begin(), it_rand);
-        vector<char> melhor_sol_rand;
-        if (!pesos_randomizado[alpha_idx].empty() && 
-            idx_melhor_rand < static_cast<int>(solucoes_randomizado[alpha_idx].size())) {
-            melhor_sol_rand = solucoes_randomizado[alpha_idx][idx_melhor_rand];
+        if (peso < melhor_global_randomizado) {
+            melhor_global_randomizado = peso;
+            melhor_alpha_idx = alpha_idx;
         }
-        
-        melhor_global_randomizado = min(melhor_global_randomizado, melhor_peso_rand);
         
         arquivo << "   Alpha " << alpha << ":" << endl;
-        arquivo << "     Melhor peso: " << melhor_peso_rand << endl;
+        arquivo << "     Melhor peso: " << peso << endl;
+        arquivo << "     Tamanho da solução: " << melhor_solucao_randomizado[alpha_idx].size() << " vértices" << endl;
         arquivo << "     Melhor solução: {";
-        for(size_t i = 0; i < melhor_sol_rand.size(); ++i) {
-            arquivo << melhor_sol_rand[i];
-            if(i < melhor_sol_rand.size() - 1) arquivo << ", ";
+        for(size_t i = 0; i < melhor_solucao_randomizado[alpha_idx].size(); ++i) {
+            arquivo << melhor_solucao_randomizado[alpha_idx][i];
+            if(i < melhor_solucao_randomizado[alpha_idx].size() - 1) arquivo << ", ";
         }
         arquivo << "}" << endl;
-        arquivo << "     Peso médio: " << fixed << setprecision(3) << media_peso_rand << endl;
-        arquivo << "     Tempo médio: " << fixed << setprecision(6) << media_tempo_rand << "s" << endl;
     }
     
-    // Resultados do Algoritmo Reativo
-    auto [melhor_peso_reat, media_peso_reat, _______] = calcular_stats(pesos_reativo);
-    auto [________, media_tempo_reat, _________] = calcular_stats(tempos_reativo);
-    
-    // Encontra a melhor solução do reativo
-    auto it_reat = min_element(pesos_reativo.begin(), pesos_reativo.end());
-    int idx_melhor_reat = distance(pesos_reativo.begin(), it_reat);
-    vector<char> melhor_sol_reat;
-    if (!pesos_reativo.empty() && idx_melhor_reat < static_cast<int>(solucoes_reativo.size())) {
-        melhor_sol_reat = solucoes_reativo[idx_melhor_reat];
-    }
-    
+    // Resultado do Algoritmo Reativo
     arquivo << "\n3. ALGORITMO GULOSO RANDOMIZADO REATIVO:" << endl;
     arquivo << "   Alphas utilizados: {" << alphas_reativo[0] << ", " << alphas_reativo[1] << ", " << alphas_reativo[2] << "}" << endl;
-    arquivo << "   Melhor peso: " << melhor_peso_reat << endl;
+    arquivo << "   Melhor peso encontrado: " << melhor_peso_reativo << endl;
+    arquivo << "   Tamanho da solução: " << melhor_solucao_reativo.size() << " vértices" << endl;
     arquivo << "   Melhor solução: {";
-    for(size_t i = 0; i < melhor_sol_reat.size(); ++i) {
-        arquivo << melhor_sol_reat[i];
-        if(i < melhor_sol_reat.size() - 1) arquivo << ", ";
+    for(size_t i = 0; i < melhor_solucao_reativo.size(); ++i) {
+        arquivo << melhor_solucao_reativo[i];
+        if(i < melhor_solucao_reativo.size() - 1) arquivo << ", ";
     }
     arquivo << "}" << endl;
-    arquivo << "   Peso médio: " << fixed << setprecision(3) << media_peso_reat << endl;
-    arquivo << "   Tempo médio: " << fixed << setprecision(6) << media_tempo_reat << "s" << endl;
     
-    // Resumo comparativo
-    arquivo << "\n======== RESUMO COMPARATIVO ========" << endl;
-    arquivo << "Melhor solução por algoritmo:" << endl;
-    arquivo << "  Guloso Adaptativo: " << melhor_peso_adap << endl;
-    arquivo << "  Guloso Randomizado: " << melhor_global_randomizado << endl;
-    arquivo << "  Guloso Reativo: " << melhor_peso_reat << endl;
+    // Comparação final das melhores soluções
+    arquivo << "\n======== COMPARAÇÃO DAS MELHORES SOLUÇÕES ========" << endl;
+    arquivo << "Melhor peso por algoritmo:" << endl;
+    arquivo << "  Guloso Adaptativo: " << melhor_peso_adaptativo 
+            << " (" << melhor_solucao_adaptativo.size() << " vértices)" << endl;
+    arquivo << "  Guloso Randomizado: " << melhor_global_randomizado 
+            << " (" << melhor_solucao_randomizado[melhor_alpha_idx].size() << " vértices)"
+            << " [Alpha=" << alphas_randomizado[melhor_alpha_idx] << "]" << endl;
+    arquivo << "  Guloso Reativo: " << melhor_peso_reativo 
+            << " (" << melhor_solucao_reativo.size() << " vértices)" << endl;
     
-    // Determina o vencedor
-    float melhor_absoluto = min({melhor_peso_adap, melhor_global_randomizado, melhor_peso_reat});
-    arquivo << "\nMELHOR RESULTADO GERAL: " << melhor_absoluto;
-    if (melhor_absoluto == melhor_peso_adap) arquivo << " (Guloso Adaptativo)";
-    else if (melhor_absoluto == melhor_global_randomizado) arquivo << " (Guloso Randomizado)";
-    else arquivo << " (Guloso Reativo)";
-    arquivo << endl;
+    // Determina a melhor solução absoluta
+    float melhor_absoluto = min({melhor_peso_adaptativo, melhor_global_randomizado, melhor_peso_reativo});
+    arquivo << "\n*** MELHOR SOLUÇÃO ABSOLUTA ***" << endl;
+    arquivo << "Peso: " << melhor_absoluto << endl;
+    
+    if (melhor_absoluto == melhor_peso_adaptativo) {
+        arquivo << "Algoritmo: Guloso Adaptativo" << endl;
+        arquivo << "Vértices: " << melhor_solucao_adaptativo.size() << endl;
+        arquivo << "Solução: {";
+        for(size_t i = 0; i < melhor_solucao_adaptativo.size(); ++i) {
+            arquivo << melhor_solucao_adaptativo[i];
+            if(i < melhor_solucao_adaptativo.size() - 1) arquivo << ", ";
+        }
+        arquivo << "}" << endl;
+    } 
+    else if (melhor_absoluto == melhor_global_randomizado) {
+        arquivo << "Algoritmo: Guloso Randomizado (Alpha=" << alphas_randomizado[melhor_alpha_idx] << ")" << endl;
+        arquivo << "Vértices: " << melhor_solucao_randomizado[melhor_alpha_idx].size() << endl;
+        arquivo << "Solução: {";
+        for(size_t i = 0; i < melhor_solucao_randomizado[melhor_alpha_idx].size(); ++i) {
+            arquivo << melhor_solucao_randomizado[melhor_alpha_idx][i];
+            if(i < melhor_solucao_randomizado[melhor_alpha_idx].size() - 1) arquivo << ", ";
+        }
+        arquivo << "}" << endl;
+    } 
+    else {
+        arquivo << "Algoritmo: Guloso Reativo" << endl;
+        arquivo << "Vértices: " << melhor_solucao_reativo.size() << endl;
+        arquivo << "Solução: {";
+        for(size_t i = 0; i < melhor_solucao_reativo.size(); ++i) {
+            arquivo << melhor_solucao_reativo[i];
+            if(i < melhor_solucao_reativo.size() - 1) arquivo << ", ";
+        }
+        arquivo << "}" << endl;
+    }
     
     arquivo << "\n" << string(55, '=') << "\n" << endl;
     arquivo.close();
     
-    cout << "\n=== EXPERIMENTOS CONCLUÍDOS ===" << endl;
-    cout << "Resultados detalhados salvos em: " << arquivo_saida << endl;
-    cout << "Melhor resultado encontrado: " << melhor_absoluto << endl;
+    cout << "Experimentos de melhor solução concluídos." << endl;
+    cout << "Melhor peso absoluto encontrado: " << melhor_absoluto << endl;
+    cout << "Resultados salvos em: " << arquivo_saida << endl;
+}
+
+// Função consolidada para processar todas as instâncias e gerar tabela final
+void Guloso::executar_experimentos_consolidado(const string& diretorio_instancias, const string& arquivo_saida) {
+    // Configurações dos experimentos
+    const int NUM_EXECUCOES = 10;
+    const int ITER_RANDOMIZADO = 30;
+    const int ITER_REATIVO = 300;
+    const int BLOCO_REATIVO = 40;
+    
+    // Valores de alpha conforme especificação
+    float alphas_randomizado[3] = {0.25f, 0.5f, 0.75f};
+    float alphas_reativo[3] = {0.25f, 0.5f, 0.75f};
+    
+    // Lista de instâncias a processar
+    vector<string> instancias = {
+        "g_25_0.16_0_1_0.txt", "g_25_0.16_0_1_1.txt",
+        "g_25_0.21_0_1_0.txt", "g_25_0.21_0_1_1.txt", 
+        "g_25_0.26_0_1_0.txt", "g_25_0.26_0_1_1.txt",
+        "g_40_0.10_0_1_0.txt", "g_40_0.10_0_1_1.txt",
+        "g_40_0.15_0_1_0.txt", "g_40_0.15_0_1_1.txt",
+        "g_40_0.20_0_1_0.txt", "g_40_0.20_0_1_1.txt",
+        "g_60_0.07_0_1_0.txt", "g_60_0.07_0_1_1.txt",
+        "g_60_0.12_0_1_0.txt", "g_60_0.12_0_1_1.txt",
+        "g_60_0.17_0_1_0.txt", "g_60_0.17_0_1_1.txt"
+    };
+    
+    // Estrutura para armazenar resultados de todas as instâncias
+    struct ResultadoInstancia {
+        string nome;
+        int num_vertices;
+        float melhor_known; // Será preenchido manualmente ou calculado
+        float guloso;
+        float randomizado_02;
+        float randomizado_03;
+        float randomizado_04;  
+        float reativo;
+    };
+    
+    vector<ResultadoInstancia> resultados;
+    
+    cout << "=== PROCESSANDO TODAS AS INSTÂNCIAS ===" << endl;
+    cout << "Total de instâncias: " << instancias.size() << endl;
+    
+    for (size_t idx = 0; idx < instancias.size(); ++idx) {
+        const string& nome_instancia = instancias[idx];
+        string caminho_completo = diretorio_instancias + "/" + nome_instancia;
+        
+        cout << "\nProcessando (" << (idx + 1) << "/" << instancias.size() << "): " << nome_instancia << endl;
+        
+        // Carregar grafo da instância
+        Grafo* grafo = Gerenciador::carregar_informacoes_entrada(caminho_completo.c_str());
+        if (!grafo) {
+            cout << "ERRO: Não foi possível carregar " << nome_instancia << endl;
+            continue;
+        }
+        
+        ResultadoInstancia resultado;
+        resultado.nome = nome_instancia;
+        resultado.num_vertices = grafo->get_lista_adj().size();
+        resultado.melhor_known = 0; // Será ajustado depois
+        
+        // ========== ALGORITMO GULOSO ADAPTATIVO ==========
+        float melhor_guloso = FLT_MAX;
+        for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+            auto [solucao, peso] = algoritmo_guloso_adaptativo(*grafo);
+            melhor_guloso = min(melhor_guloso, peso);
+        }
+        resultado.guloso = melhor_guloso;
+        
+        // ========== ALGORITMO GULOSO RANDOMIZADO ==========
+        vector<float> melhores_randomizado(3, FLT_MAX);
+        for (int alpha_idx = 0; alpha_idx < 3; ++alpha_idx) {
+            for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+                auto [solucao, peso] = guloso_randomizado(*grafo, alphas_randomizado[alpha_idx], ITER_RANDOMIZADO);
+                melhores_randomizado[alpha_idx] = min(melhores_randomizado[alpha_idx], peso);
+            }
+        }
+        resultado.randomizado_02 = melhores_randomizado[0];
+        resultado.randomizado_03 = melhores_randomizado[1]; 
+        resultado.randomizado_04 = melhores_randomizado[2];
+        
+        // ========== ALGORITMO GULOSO RANDOMIZADO REATIVO ==========
+        float melhor_reativo = FLT_MAX;
+        for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+            auto [solucao, peso] = guloso_randomizado_reativo(*grafo, alphas_reativo, ITER_REATIVO, BLOCO_REATIVO);
+            melhor_reativo = min(melhor_reativo, peso);
+        }
+        resultado.reativo = melhor_reativo;
+        
+        // Define melhor_known como o menor valor encontrado
+        resultado.melhor_known = min({resultado.guloso, resultado.randomizado_02, 
+                                     resultado.randomizado_03, resultado.randomizado_04, resultado.reativo});
+        
+        resultados.push_back(resultado);
+        
+        cout << "  Guloso: " << resultado.guloso << " | Random: " << resultado.randomizado_02 
+             << ", " << resultado.randomizado_03 << ", " << resultado.randomizado_04 
+             << " | Reativo: " << resultado.reativo << endl;
+        
+        delete grafo;
+    }
+    
+    // ========== GERAÇÃO DA TABELA CONSOLIDADA ==========
+    ofstream arquivo(arquivo_saida);
+    if (!arquivo.is_open()) {
+        cerr << "ERRO: Não foi possível criar o arquivo: " << arquivo_saida << endl;
+        return;
+    }
+    
+    // Cabeçalho da tabela
+    arquivo << "Tabela 1: Resultados obtidos pelos algoritmos" << endl << endl;
+    arquivo << left << setw(20) << "Instancias" 
+            << setw(8) << "#V"
+            << setw(8) << "best"
+            << setw(8) << "Guloso"
+            << setw(30) << "Randomizado"
+            << setw(12) << "Reativo" << endl;
+    arquivo << left << setw(20) << ""
+            << setw(8) << ""
+            << setw(8) << ""
+            << setw(8) << ""
+            << setw(10) << "alfa=0,2"
+            << setw(10) << "alfa=0,3" 
+            << setw(10) << "alfa=0,4"
+            << setw(12) << "{0,2;0,3;0,4}" << endl;
+    arquivo << string(88, '-') << endl;
+    
+    // Dados da tabela
+    for (const auto& resultado : resultados) {
+        // Converte nome da instância para o formato da tabela (remove extensão e ajusta)
+        string nome_tabela = resultado.nome;
+        nome_tabela = nome_tabela.substr(0, nome_tabela.find(".txt"));
+        
+        arquivo << left << setw(20) << nome_tabela
+                << setw(8) << resultado.num_vertices
+                << setw(8) << static_cast<int>(resultado.melhor_known)
+                << setw(8) << static_cast<int>(resultado.guloso)
+                << setw(10) << static_cast<int>(resultado.randomizado_02)
+                << setw(10) << static_cast<int>(resultado.randomizado_03)
+                << setw(10) << static_cast<int>(resultado.randomizado_04)
+                << setw(12) << static_cast<int>(resultado.reativo) << endl;
+    }
+    
+    arquivo << string(88, '-') << endl;
+    arquivo << endl;
+    
+    // Estatísticas resumidas
+    arquivo << "=== RESUMO ESTATÍSTICO ===" << endl;
+    
+    int vitorias_guloso = 0, vitorias_rand02 = 0, vitorias_rand03 = 0, vitorias_rand04 = 0, vitorias_reativo = 0;
+    
+    for (const auto& resultado : resultados) {
+        float melhor = min({resultado.guloso, resultado.randomizado_02, 
+                           resultado.randomizado_03, resultado.randomizado_04, resultado.reativo});
+        
+        if (resultado.guloso == melhor) vitorias_guloso++;
+        if (resultado.randomizado_02 == melhor) vitorias_rand02++;
+        if (resultado.randomizado_03 == melhor) vitorias_rand03++;
+        if (resultado.randomizado_04 == melhor) vitorias_rand04++;
+        if (resultado.reativo == melhor) vitorias_reativo++;
+    }
+    
+    arquivo << "Vitórias por algoritmo:" << endl;
+    arquivo << "  Guloso: " << vitorias_guloso << endl;
+    arquivo << "  Randomizado (α=0,2): " << vitorias_rand02 << endl;
+    arquivo << "  Randomizado (α=0,3): " << vitorias_rand03 << endl;
+    arquivo << "  Randomizado (α=0,4): " << vitorias_rand04 << endl;
+    arquivo << "  Reativo: " << vitorias_reativo << endl;
+    arquivo << "Total de instâncias: " << resultados.size() << endl;
+    
+    arquivo.close();
+    
+    cout << "\n=== EXPERIMENTOS CONSOLIDADOS CONCLUÍDOS ===" << endl;
+    cout << "Resultados salvos em: " << arquivo_saida << endl;
+    cout << "Instâncias processadas: " << resultados.size() << endl;
+}
+
+// Função para gerar tabela com diferenças percentuais em relação ao best
+void Guloso::executar_experimentos_percentuais(const string& diretorio_instancias, const string& arquivo_saida) {
+    // Configurações dos experimentos
+    const int NUM_EXECUCOES = 10;
+    const int ITER_RANDOMIZADO = 30;
+    const int ITER_REATIVO = 300;
+    const int BLOCO_REATIVO = 40;
+    
+    // Valores de alpha conforme especificação
+    float alphas_randomizado[3] = {0.25f, 0.5f, 0.75f};
+    float alphas_reativo[3] = {0.25f, 0.5f, 0.75f};
+    
+    // Lista de instâncias a processar
+    vector<string> instancias = {
+        "g_25_0.16_0_1_0.txt", "g_25_0.16_0_1_1.txt",
+        "g_25_0.21_0_1_0.txt", "g_25_0.21_0_1_1.txt", 
+        "g_25_0.26_0_1_0.txt", "g_25_0.26_0_1_1.txt",
+        "g_40_0.10_0_1_0.txt", "g_40_0.10_0_1_1.txt",
+        "g_40_0.15_0_1_0.txt", "g_40_0.15_0_1_1.txt",
+        "g_40_0.20_0_1_0.txt", "g_40_0.20_0_1_1.txt",
+        "g_60_0.07_0_1_0.txt", "g_60_0.07_0_1_1.txt",
+        "g_60_0.12_0_1_0.txt", "g_60_0.12_0_1_1.txt",
+        "g_60_0.17_0_1_0.txt", "g_60_0.17_0_1_1.txt"
+    };
+    
+    // Estrutura para armazenar resultados de todas as instâncias
+    struct ResultadoInstancia {
+        string nome;
+        int num_vertices;
+        float best_value;
+        float guloso;
+        float randomizado_02;
+        float randomizado_03;
+        float randomizado_04;  
+        float reativo;
+    };
+    
+    vector<ResultadoInstancia> resultados;
+    
+    cout << "=== PROCESSANDO INSTÂNCIAS PARA TABELA PERCENTUAL ===" << endl;
+    cout << "Total de instâncias: " << instancias.size() << endl;
+    
+    for (size_t idx = 0; idx < instancias.size(); ++idx) {
+        const string& nome_instancia = instancias[idx];
+        string caminho_completo = diretorio_instancias + "/" + nome_instancia;
+        
+        cout << "\nProcessando (" << (idx + 1) << "/" << instancias.size() << "): " << nome_instancia << endl;
+        
+        // Carregar grafo da instância
+        Grafo* grafo = Gerenciador::carregar_informacoes_entrada(caminho_completo.c_str());
+        if (!grafo) {
+            cout << "ERRO: Não foi possível carregar " << nome_instancia << endl;
+            continue;
+        }
+        
+        ResultadoInstancia resultado;
+        resultado.nome = nome_instancia;
+        resultado.num_vertices = grafo->get_lista_adj().size();
+        
+        // ========== ALGORITMO GULOSO ADAPTATIVO ==========
+        float melhor_guloso = FLT_MAX;
+        for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+            auto [solucao, peso] = algoritmo_guloso_adaptativo(*grafo);
+            melhor_guloso = min(melhor_guloso, peso);
+        }
+        resultado.guloso = melhor_guloso;
+        
+        // ========== ALGORITMO GULOSO RANDOMIZADO ==========
+        vector<float> melhores_randomizado(3, FLT_MAX);
+        for (int alpha_idx = 0; alpha_idx < 3; ++alpha_idx) {
+            for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+                auto [solucao, peso] = guloso_randomizado(*grafo, alphas_randomizado[alpha_idx], ITER_RANDOMIZADO);
+                melhores_randomizado[alpha_idx] = min(melhores_randomizado[alpha_idx], peso);
+            }
+        }
+        resultado.randomizado_02 = melhores_randomizado[0];
+        resultado.randomizado_03 = melhores_randomizado[1]; 
+        resultado.randomizado_04 = melhores_randomizado[2];
+        
+        // ========== ALGORITMO GULOSO RANDOMIZADO REATIVO ==========
+        float melhor_reativo = FLT_MAX;
+        for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+            auto [solucao, peso] = guloso_randomizado_reativo(*grafo, alphas_reativo, ITER_REATIVO, BLOCO_REATIVO);
+            melhor_reativo = min(melhor_reativo, peso);
+        }
+        resultado.reativo = melhor_reativo;
+        
+        // Define best como o menor valor encontrado
+        resultado.best_value = min({resultado.guloso, resultado.randomizado_02, 
+                                   resultado.randomizado_03, resultado.randomizado_04, resultado.reativo});
+        
+        resultados.push_back(resultado);
+        delete grafo;
+    }
+    
+    // ========== GERAÇÃO DA TABELA COM PERCENTUAIS ==========
+    ofstream arquivo(arquivo_saida);
+    if (!arquivo.is_open()) {
+        cerr << "ERRO: Não foi possível criar o arquivo: " << arquivo_saida << endl;
+        return;
+    }
+    
+    // Cabeçalho da tabela
+    arquivo << "Tabela 2: Diferenças percentuais em relação ao melhor resultado" << endl << endl;
+    arquivo << left << setw(20) << "Instancias" 
+            << setw(8) << "#V"
+            << setw(8) << "best"
+            << setw(8) << "Guloso"
+            << setw(30) << "Randomizado"
+            << setw(12) << "Reativo" << endl;
+    arquivo << left << setw(20) << ""
+            << setw(8) << ""
+            << setw(8) << ""
+            << setw(8) << ""
+            << setw(10) << "alfa=0,25"
+            << setw(10) << "alfa=0,50" 
+            << setw(10) << "alfa=0,75"
+            << setw(12) << "{0,25;0,50;0,75}" << endl;
+    arquivo << string(88, '-') << endl;
+    
+    // Variáveis para calcular médias dos percentuais
+    double soma_perc_guloso = 0.0, soma_perc_rand02 = 0.0, soma_perc_rand03 = 0.0;
+    double soma_perc_rand04 = 0.0, soma_perc_reativo = 0.0;
+    int count = 0;
+    
+    // Função auxiliar para calcular percentual
+    auto calcular_percentual = [](float valor, float best) -> double {
+        if (best == 0.0f) return 0.0;
+        return ((valor - best) / best) * 100.0;
+    };
+    
+    // Dados da tabela
+    for (const auto& resultado : resultados) {
+        // Converte nome da instância para o formato da tabela (remove extensão e ajusta)
+        string nome_tabela = resultado.nome;
+        nome_tabela = nome_tabela.substr(0, nome_tabela.find(".txt"));
+        
+        // Calcula percentuais
+        double perc_guloso = calcular_percentual(resultado.guloso, resultado.best_value);
+        double perc_rand02 = calcular_percentual(resultado.randomizado_02, resultado.best_value);
+        double perc_rand03 = calcular_percentual(resultado.randomizado_03, resultado.best_value);
+        double perc_rand04 = calcular_percentual(resultado.randomizado_04, resultado.best_value);
+        double perc_reativo = calcular_percentual(resultado.reativo, resultado.best_value);
+        
+        // Acumula para média
+        soma_perc_guloso += perc_guloso;
+        soma_perc_rand02 += perc_rand02;
+        soma_perc_rand03 += perc_rand03;
+        soma_perc_rand04 += perc_rand04;
+        soma_perc_reativo += perc_reativo;
+        count++;
+        
+        arquivo << left << setw(20) << nome_tabela
+                << setw(8) << resultado.num_vertices
+                << setw(8) << static_cast<int>(resultado.best_value)
+                << setw(8) << fixed << setprecision(2) << perc_guloso << "%"
+                << setw(10) << fixed << setprecision(2) << perc_rand02 << "%"
+                << setw(10) << fixed << setprecision(2) << perc_rand03 << "%"
+                << setw(10) << fixed << setprecision(2) << perc_rand04 << "%"
+                << setw(12) << fixed << setprecision(2) << perc_reativo << "%" << endl;
+    }
+    
+    // Linha das médias
+    arquivo << string(88, '-') << endl;
+    arquivo << left << setw(20) << "MÉDIA PERCENTUAL"
+            << setw(8) << ""
+            << setw(8) << ""
+            << setw(8) << fixed << setprecision(2) << (soma_perc_guloso / count) << "%"
+            << setw(10) << fixed << setprecision(2) << (soma_perc_rand02 / count) << "%"
+            << setw(10) << fixed << setprecision(2) << (soma_perc_rand03 / count) << "%"
+            << setw(10) << fixed << setprecision(2) << (soma_perc_rand04 / count) << "%"
+            << setw(12) << fixed << setprecision(2) << (soma_perc_reativo / count) << "%" << endl;
+    
+    arquivo << string(88, '-') << endl;
+    arquivo << endl;
+    
+    // Estatísticas adicionais
+    arquivo << "=== ANÁLISE ESTATÍSTICA ===" << endl;
+    arquivo << "Diferença percentual média por algoritmo:" << endl;
+    arquivo << "  Guloso: " << fixed << setprecision(2) << (soma_perc_guloso / count) << "%" << endl;
+    arquivo << "  Randomizado (α=0,2): " << fixed << setprecision(2) << (soma_perc_rand02 / count) << "%" << endl;
+    arquivo << "  Randomizado (α=0,3): " << fixed << setprecision(2) << (soma_perc_rand03 / count) << "%" << endl;
+    arquivo << "  Randomizado (α=0,4): " << fixed << setprecision(2) << (soma_perc_rand04 / count) << "%" << endl;
+    arquivo << "  Reativo: " << fixed << setprecision(2) << (soma_perc_reativo / count) << "%" << endl;
+    arquivo << "Total de instâncias analisadas: " << count << endl;
+    
+    arquivo.close();
+    
+    cout << "\n=== TABELA PERCENTUAL CONCLUÍDA ===" << endl;
+    cout << "Resultados salvos em: " << arquivo_saida << endl;
+    cout << "Instâncias processadas: " << count << endl;
 }   
