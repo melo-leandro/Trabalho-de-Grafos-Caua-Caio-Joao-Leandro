@@ -1,7 +1,7 @@
 #include "Guloso.h"
 #include "Gerenciador.h"
 #include <vector>
-#include <set>
+#include <unordered_set>
 #include <climits>
 #include <cfloat>
 #include <cstdlib>
@@ -21,50 +21,60 @@ pair<vector<char>, float> Guloso::algoritmo_guloso_adaptativo(Grafo &grafo) {
         if(grafo.get_lista_adj().empty())
             return {{}, 0.0f};
 
-        vector<char> solucao;                    // Conjunto dominante final
-        set<char> nos_usados;                    // Nós já incluídos na solução
-        set<char> vertices_dominados;            // Vértices já dominados
+        // ETAPA 1: INICIALIZAÇÃO DE ESTRUTURAS DE CONTROLE
+        const auto& nos = grafo.get_lista_adj();
+        const int num_nos = nos.size();
+        
+        vector<char> solucao;                     // Conjunto dominante final
+        unordered_set<char> nos_usados;          // Nós já incluídos na solução
+        unordered_set<char> nos_dominados;       // Nós já dominados
+        nos_usados.reserve(num_nos);
+        nos_dominados.reserve(num_nos);
         float peso_total = 0.0;                  // Rastreia peso total da solução
         
-        while(vertices_dominados.size() < grafo.get_lista_adj().size()) {  // Unificação: mesmo critério do GRASP
+        // Dominações pré-computadas para evitar recálculos
+        vector<unordered_set<char>> cache_dominacao(num_nos);
+        for (int i = 0; i < num_nos; ++i) {
+            No* no = nos[i];
+            cache_dominacao[i].insert(no->get_id());
+            for (Aresta* aresta : no->get_arestas()) {
+                cache_dominacao[i].insert(aresta->get_id_destino());
+            }
+        }
+        
+        // ETAPA 2: LOOP DE CONSTRUÇÃO DA POSSÍVEL SOLUÇÃO
+        while(nos_dominados.size() < num_nos) {
             No* melhor_candidato = nullptr;
             float melhor_beneficio = 0.0;
             
-            // Avalia todos os nós não utilizados
-            for(No* no : grafo.get_lista_adj()) {
-                if(nos_usados.count(no->get_id()))
+            // Avalia todos os nós não utilizados usando cache
+            for(int i = 0; i < num_nos; ++i) {
+                No* no = nos[i];
+                if(nos_usados.find(no->get_id()) != nos_usados.end())
                     continue;
                 
-                // Nós com peso == 0 são sempre ótimos - inclui imediatamente
+                // Inclusão imediata de nós peso zero
                 if(no->get_peso() == 0) {
                     solucao.push_back(no->get_id());
                     nos_usados.insert(no->get_id());
-                    peso_total += no->get_peso();  // Soma peso (pode ser negativo)
-                    vertices_dominados.insert(no->get_id());
-                    for(Aresta* aresta : no->get_arestas())
-                        vertices_dominados.insert(aresta->get_id_destino());
+                    peso_total += no->get_peso();
+                    
+                    for(char v : cache_dominacao[i]) {
+                        nos_dominados.insert(v);
+                    }
                     continue;
                 }
                 
-                // Calcula domínio potencial uma única vez
-                set<char> dominio_potencial;
-                dominio_potencial.insert(no->get_id());
-                for(Aresta* aresta : no->get_arestas())
-                    dominio_potencial.insert(aresta->get_id_destino());
-
-                // Conta novos vértices que seriam dominados
+                // Cálculo de novos dominados
                 int novos_dominados = 0;
-                for(char v : dominio_potencial) {
-                    if(!vertices_dominados.count(v)) {
+                for(char v : cache_dominacao[i]) {
+                    if(nos_dominados.find(v) == nos_dominados.end()) {
                         novos_dominados++;
                     }
                 }
+                if(novos_dominados == 0) continue;
                 
-                // Early exit se não domina novos vértices
-                if(novos_dominados == 0)
-                    continue;
-                
-                // Critério de eficiência otimizado - peso já verificado como > 0
+                // Heuristicamente, o benefício é a razão entre novos dominados e peso
                 float beneficio = (float)novos_dominados / no->get_peso();
                 
                 if(beneficio > melhor_beneficio) {
@@ -73,19 +83,23 @@ pair<vector<char>, float> Guloso::algoritmo_guloso_adaptativo(Grafo &grafo) {
                 }
             }
             
-            // Se não há mais candidatos válidos, termina (critério unificado)
             if(melhor_candidato == nullptr)
                 break;
             
-            // Adiciona o melhor candidato à solução
+            // Atualização da solução
             solucao.push_back(melhor_candidato->get_id());
             nos_usados.insert(melhor_candidato->get_id());
-            peso_total += melhor_candidato->get_peso();  // Soma peso do candidato escolhido
+            peso_total += melhor_candidato->get_peso();
             
-            // Atualiza vértices dominados (reutiliza cálculo)
-            vertices_dominados.insert(melhor_candidato->get_id());
-            for(Aresta* aresta : melhor_candidato->get_arestas())
-                vertices_dominados.insert(aresta->get_id_destino());
+            // Atualização dos dominados
+            for (int i = 0; i < num_nos; ++i) {
+                if (nos[i] == melhor_candidato) {
+                    for (char v : cache_dominacao[i]) {
+                        nos_dominados.insert(v);
+                    }
+                    break;
+                }
+            }
         }
 
     return {solucao, peso_total};
@@ -116,6 +130,7 @@ pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float al
     
     float peso_total = 0.0;
     
+    // Dominações pré-computadas para evitar recálculos
     vector<unordered_set<char>> cache_dominacao(num_nos);
     for (int i = 0; i < num_nos; ++i) {
         No* no = nos[i];
