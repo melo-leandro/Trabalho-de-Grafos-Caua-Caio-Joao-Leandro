@@ -892,6 +892,7 @@ void Guloso::executar_experimentos_percentuais(const string& diretorio_instancia
 
 // Função para gerar tabela com tempos de execução
 void Guloso::executar_experimentos_tempos(const string& diretorio_instancias, const string& arquivo_saida) {
+
     using namespace chrono;
     
     // Configurações dos experimentos
@@ -1100,4 +1101,248 @@ void Guloso::executar_experimentos_tempos(const string& diretorio_instancias, co
     cout << "\n=== ANÁLISE DE TEMPOS CONCLUÍDA ===" << endl;
     cout << "Resultados salvos em: " << arquivo_saida << endl;
     cout << "Instâncias processadas: " << count << endl;
+}
+
+// Função para gerar tabela com médias e diferenças percentuais em relação ao best
+void Guloso::executar_experimentos_medias(const string& diretorio_instancias, const string& arquivo_saida) {
+    // Configurações dos experimentos
+    const int NUM_EXECUCOES = 10;
+    const int ITER_RANDOMIZADO = 30;
+    const int ITER_REATIVO = 300;
+    const int BLOCO_REATIVO = 40;
+    
+    // Valores de alpha conforme especificação
+    float alphas_randomizado[3] = {0.25f, 0.5f, 0.75f};
+    float alphas_reativo[3] = {0.25f, 0.5f, 0.75f};
+    
+    // Lista de instâncias a processar
+    vector<string> instancias = {
+        "g_25_0.16_0_1_0.txt", "g_25_0.16_0_1_1.txt",
+        "g_25_0.21_0_1_0.txt", "g_25_0.21_0_1_1.txt", 
+        "g_25_0.26_0_1_0.txt", "g_25_0.26_0_1_1.txt",
+        "g_40_0.10_0_1_0.txt", "g_40_0.10_0_1_1.txt",
+        "g_40_0.15_0_1_0.txt", "g_40_0.15_0_1_1.txt",
+        "g_40_0.20_0_1_0.txt", "g_40_0.20_0_1_1.txt",
+        "g_60_0.07_0_1_0.txt", "g_60_0.07_0_1_1.txt",
+        "g_60_0.12_0_1_0.txt", "g_60_0.12_0_1_1.txt",
+        "g_60_0.17_0_1_0.txt", "g_60_0.17_0_1_1.txt"
+    };
+    
+    // Estrutura para armazenar médias de todas as instâncias
+    struct MediaInstancia {
+        string nome;
+        int num_nos;
+        float best_media;
+        float media_guloso;
+        float media_randomizado_02;
+        float media_randomizado_03;
+        float media_randomizado_04;  
+        float media_reativo;
+    };
+    
+    vector<MediaInstancia> resultados_medias;
+    
+    cout << "=== PROCESSANDO INSTÂNCIAS PARA ANÁLISE DE MÉDIAS ===" << endl;
+    cout << "Total de instâncias: " << instancias.size() << endl;
+    
+    for (size_t idx = 0; idx < instancias.size(); ++idx) {
+        const string& nome_instancia = instancias[idx];
+        string caminho_completo = diretorio_instancias + "/" + nome_instancia;
+        
+        cout << "\nProcessando (" << (idx + 1) << "/" << instancias.size() << "): " << nome_instancia << endl;
+        
+        // Carregar grafo da instância
+        Grafo* grafo = Gerenciador::carregar_informacoes_entrada(caminho_completo.c_str());
+        if (!grafo) {
+            cout << "ERRO: Não foi possível carregar " << nome_instancia << endl;
+            continue;
+        }
+        
+        MediaInstancia resultado;
+        resultado.nome = nome_instancia;
+        resultado.num_nos = grafo->get_lista_adj().size();
+        
+        // ========== ALGORITMO GULOSO ADAPTATIVO - CALCULAR MÉDIA ==========
+        float soma_guloso = 0.0f;
+        for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+            auto [solucao, peso] = algoritmo_guloso_adaptativo(*grafo);
+            soma_guloso += peso;
+        }
+        resultado.media_guloso = soma_guloso / NUM_EXECUCOES;
+        
+        // ========== ALGORITMO GULOSO RANDOMIZADO - CALCULAR MÉDIAS ==========
+        vector<float> somas_randomizado(3, 0.0f);
+        for (int alpha_idx = 0; alpha_idx < 3; ++alpha_idx) {
+            for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+                auto [solucao, peso] = guloso_randomizado(*grafo, alphas_randomizado[alpha_idx], ITER_RANDOMIZADO);
+                somas_randomizado[alpha_idx] += peso;
+            }
+        }
+        resultado.media_randomizado_02 = somas_randomizado[0] / NUM_EXECUCOES;
+        resultado.media_randomizado_03 = somas_randomizado[1] / NUM_EXECUCOES; 
+        resultado.media_randomizado_04 = somas_randomizado[2] / NUM_EXECUCOES;
+        
+        // ========== ALGORITMO GULOSO RANDOMIZADO REATIVO - CALCULAR MÉDIA ==========
+        float soma_reativo = 0.0f;
+        for (int exec = 0; exec < NUM_EXECUCOES; ++exec) {
+            auto [solucao, peso] = guloso_randomizado_reativo(*grafo, alphas_reativo, ITER_REATIVO, BLOCO_REATIVO);
+            soma_reativo += peso;
+        }
+        resultado.media_reativo = soma_reativo / NUM_EXECUCOES;
+        
+        // Define best como a menor média encontrada
+        resultado.best_media = min({resultado.media_guloso, resultado.media_randomizado_02, 
+                                   resultado.media_randomizado_03, resultado.media_randomizado_04, 
+                                   resultado.media_reativo});
+        
+        resultados_medias.push_back(resultado);
+        
+        cout << "  Médias: Guloso=" << fixed << setprecision(2) << resultado.media_guloso
+             << " | Random=" << resultado.media_randomizado_02 << ", " << resultado.media_randomizado_03 
+             << ", " << resultado.media_randomizado_04 << " | Reativo=" << resultado.media_reativo 
+             << " | Best=" << resultado.best_media << endl;
+        
+        delete grafo;
+    }
+    
+    // ========== GERAÇÃO DA TABELA COM DIFERENÇAS PERCENTUAIS DAS MÉDIAS ==========
+    ofstream arquivo(arquivo_saida);
+    if (!arquivo.is_open()) {
+        cerr << "ERRO: Não foi possível criar o arquivo: " << arquivo_saida << endl;
+        return;
+    }
+    
+    // Cabeçalho da tabela
+    arquivo << "Tabela 4: Diferenças percentuais das médias em relação ao melhor resultado médio" << endl << endl;
+    arquivo << left << setw(20) << "Instancias" 
+            << setw(8) << "#V"
+            << setw(12) << "best_media"
+            << setw(12) << "Guloso"
+            << setw(36) << "Randomizado"
+            << setw(12) << "Reativo" << endl;
+    arquivo << left << setw(20) << ""
+            << setw(8) << ""
+            << setw(12) << ""
+            << setw(12) << ""
+            << setw(12) << "alfa=0,25"
+            << setw(12) << "alfa=0,50" 
+            << setw(12) << "alfa=0,75"
+            << setw(12) << "{0,25;0,50;0,75}" << endl;
+    arquivo << string(100, '-') << endl;
+    
+    // Variáveis para calcular médias dos percentuais
+    double soma_perc_guloso = 0.0, soma_perc_rand02 = 0.0, soma_perc_rand03 = 0.0;
+    double soma_perc_rand04 = 0.0, soma_perc_reativo = 0.0;
+    int count = 0;
+    
+    // Função auxiliar para calcular percentual
+    auto calcular_percentual = [](float valor, float best) -> double {
+        if (best == 0.0f) return 0.0;
+        return ((valor - best) / best) * 100.0;
+    };
+    
+    // Dados da tabela
+    for (const auto& resultado : resultados_medias) {
+        // Converte nome da instância para o formato da tabela (remove extensão e ajusta)
+        string nome_tabela = resultado.nome;
+        nome_tabela = nome_tabela.substr(0, nome_tabela.find(".txt"));
+        
+        // Calcula percentuais das médias em relação ao best
+        double perc_guloso = calcular_percentual(resultado.media_guloso, resultado.best_media);
+        double perc_rand02 = calcular_percentual(resultado.media_randomizado_02, resultado.best_media);
+        double perc_rand03 = calcular_percentual(resultado.media_randomizado_03, resultado.best_media);
+        double perc_rand04 = calcular_percentual(resultado.media_randomizado_04, resultado.best_media);
+        double perc_reativo = calcular_percentual(resultado.media_reativo, resultado.best_media);
+        
+        // Acumula para média geral dos percentuais
+        soma_perc_guloso += perc_guloso;
+        soma_perc_rand02 += perc_rand02;
+        soma_perc_rand03 += perc_rand03;
+        soma_perc_rand04 += perc_rand04;
+        soma_perc_reativo += perc_reativo;
+        count++;
+        
+        arquivo << left << setw(20) << nome_tabela
+                << setw(8) << resultado.num_nos
+                << setw(12) << fixed << setprecision(2) << resultado.best_media
+                << setw(12) << fixed << setprecision(2) << perc_guloso << "%"
+                << setw(12) << fixed << setprecision(2) << perc_rand02 << "%"
+                << setw(12) << fixed << setprecision(2) << perc_rand03 << "%"
+                << setw(12) << fixed << setprecision(2) << perc_rand04 << "%"
+                << setw(12) << fixed << setprecision(2) << perc_reativo << "%" << endl;
+    }
+    
+    // Linha das médias dos percentuais
+    arquivo << string(100, '-') << endl;
+    arquivo << left << setw(20) << "MÉDIA PERCENTUAL"
+            << setw(8) << ""
+            << setw(12) << ""
+            << setw(12) << fixed << setprecision(2) << (soma_perc_guloso / count) << "%"
+            << setw(12) << fixed << setprecision(2) << (soma_perc_rand02 / count) << "%"
+            << setw(12) << fixed << setprecision(2) << (soma_perc_rand03 / count) << "%"
+            << setw(12) << fixed << setprecision(2) << (soma_perc_rand04 / count) << "%"
+            << setw(12) << fixed << setprecision(2) << (soma_perc_reativo / count) << "%" << endl;
+    
+    arquivo << string(100, '-') << endl;
+    arquivo << endl;
+    
+    // Estatísticas das médias
+    arquivo << "=== ANÁLISE ESTATÍSTICA DAS MÉDIAS ===" << endl;
+    arquivo << "Diferença percentual média por algoritmo (em relação ao best médio):" << endl;
+    arquivo << "  Guloso: " << fixed << setprecision(2) << (soma_perc_guloso / count) << "%" << endl;
+    arquivo << "  Randomizado (α=0,25): " << fixed << setprecision(2) << (soma_perc_rand02 / count) << "%" << endl;
+    arquivo << "  Randomizado (α=0,50): " << fixed << setprecision(2) << (soma_perc_rand03 / count) << "%" << endl;
+    arquivo << "  Randomizado (α=0,75): " << fixed << setprecision(2) << (soma_perc_rand04 / count) << "%" << endl;
+    arquivo << "  Reativo: " << fixed << setprecision(2) << (soma_perc_reativo / count) << "%" << endl;
+    
+    // Contagem de vitórias baseada nas médias
+    int vitorias_guloso = 0, vitorias_rand02 = 0, vitorias_rand03 = 0, vitorias_rand04 = 0, vitorias_reativo = 0;
+    
+    for (const auto& resultado : resultados_medias) {
+        float melhor_media = min({resultado.media_guloso, resultado.media_randomizado_02, 
+                                 resultado.media_randomizado_03, resultado.media_randomizado_04, 
+                                 resultado.media_reativo});
+        
+        if (abs(resultado.media_guloso - melhor_media) < 1e-6) vitorias_guloso++;
+        if (abs(resultado.media_randomizado_02 - melhor_media) < 1e-6) vitorias_rand02++;
+        if (abs(resultado.media_randomizado_03 - melhor_media) < 1e-6) vitorias_rand03++;
+        if (abs(resultado.media_randomizado_04 - melhor_media) < 1e-6) vitorias_rand04++;
+        if (abs(resultado.media_reativo - melhor_media) < 1e-6) vitorias_reativo++;
+    }
+    
+    arquivo << "\nVitórias por algoritmo (baseado nas médias):" << endl;
+    arquivo << "  Guloso: " << vitorias_guloso << endl;
+    arquivo << "  Randomizado (α=0,25): " << vitorias_rand02 << endl;
+    arquivo << "  Randomizado (α=0,50): " << vitorias_rand03 << endl;
+    arquivo << "  Randomizado (α=0,75): " << vitorias_rand04 << endl;
+    arquivo << "  Reativo: " << vitorias_reativo << endl;
+    arquivo << "Total de instâncias analisadas: " << count << endl;
+    
+    // Valores médios absolutos
+    arquivo << "\nValores médios absolutos por algoritmo:" << endl;
+    double soma_media_guloso = 0.0, soma_media_rand02 = 0.0, soma_media_rand03 = 0.0;
+    double soma_media_rand04 = 0.0, soma_media_reativo = 0.0, soma_best_media = 0.0;
+    
+    for (const auto& resultado : resultados_medias) {
+        soma_media_guloso += resultado.media_guloso;
+        soma_media_rand02 += resultado.media_randomizado_02;
+        soma_media_rand03 += resultado.media_randomizado_03;
+        soma_media_rand04 += resultado.media_randomizado_04;
+        soma_media_reativo += resultado.media_reativo;
+        soma_best_media += resultado.best_media;
+    }
+    
+    arquivo << "  Best médio geral: " << fixed << setprecision(2) << (soma_best_media / count) << endl;
+    arquivo << "  Guloso médio geral: " << fixed << setprecision(2) << (soma_media_guloso / count) << endl;
+    arquivo << "  Randomizado (α=0,25) médio geral: " << fixed << setprecision(2) << (soma_media_rand02 / count) << endl;
+    arquivo << "  Randomizado (α=0,50) médio geral: " << fixed << setprecision(2) << (soma_media_rand03 / count) << endl;
+    arquivo << "  Randomizado (α=0,75) médio geral: " << fixed << setprecision(2) << (soma_media_rand04 / count) << endl;
+    arquivo << "  Reativo médio geral: " << fixed << setprecision(2) << (soma_media_reativo / count) << endl;
+    
+    arquivo.close();
+    
+    cout << "\n=== ANÁLISE DE MÉDIAS CONCLUÍDA ===" << endl;
+    cout << "Resultados salvos em: " << arquivo_saida << endl;
+    cout << "Instâncias processadas: " << count << endl;
 }   
+

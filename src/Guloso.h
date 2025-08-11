@@ -25,6 +25,9 @@ class Guloso {
         // Função para gerar tabela com tempos de execução
         static void executar_experimentos_tempos(const string& diretorio_instancias, const string& arquivo_saida);
         
+        // Função para gerar tabela com médias e diferenças percentuais em relação ao best
+        static void executar_experimentos_medias(const string& diretorio_instancias, const string& arquivo_saida);
+        
         // Experimentos focados na qualidade da melhor solução (peso total)
         static void experimentos_melhor_solucao(Grafo &grafo, const string& nome_instancia, const string& arquivo_saida);
 

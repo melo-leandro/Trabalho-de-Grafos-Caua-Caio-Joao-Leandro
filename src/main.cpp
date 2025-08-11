@@ -15,5 +15,8 @@ int main(int argc, char *argv[]) {
     // Gera tabela com tempos de execução
     Guloso::executar_experimentos_tempos("src/instancias_t2", "src/output/tabela_tempos.txt");
     
+    // Gera tabela com médias e diferenças percentuais
+    Guloso::executar_experimentos_medias("src/instancias_t2", "src/output/tabela_medias.txt");
+    
     return 0;
 }
