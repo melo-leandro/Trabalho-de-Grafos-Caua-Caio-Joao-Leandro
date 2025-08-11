@@ -229,6 +229,7 @@ pair<vector<char>, float> Guloso::guloso_randomizado(Grafo &grafo, float alpha, 
     vector<char> melhor_solucao;
     float melhor_peso = FLT_MAX;
     
+    //Itera diversas vezes para encontrar a melhor solução
     for (int iter = 0; iter < n_iteracoes; ++iter) {
         auto [solucao, peso_total] = construir_solucao_grasp(grafo, alpha);
         
@@ -245,67 +246,78 @@ pair<vector<char>, float> Guloso::guloso_randomizado_reativo(Grafo &grafo, float
     if (grafo.get_lista_adj().empty() || alpha == nullptr || n_iteracoes <= 0 || bloco <= 0 || bloco > n_iteracoes)
         return {{}, 0.0f};
     
-    int num_alphas = 3;
+    // ETAPA 1: INICIALIZAÇÃO DE CONSTANTES E ESTRUTURAS DE CONTROLE
+    const int num_alphas = 3;
+    const double prob_inicial = 1.0 / num_alphas;
+    const double epsilon = 1e-9;
+
     vector<int> contador(num_alphas, 0);
-    vector<float> qualidade_total(num_alphas, 0.0);
-    vector<float> probabilidades(num_alphas, 1.0f / num_alphas);
+    vector<double> qualidade_total(num_alphas, 0.0);
+    vector<double> probabilidades(num_alphas, 1.0 / num_alphas);
     
     vector<char> melhor_solucao;
     float melhor_peso = FLT_MAX;
     
+    // ETAPA 2: LOOP PRINCIPAL DE ITERAÇÕES
     for (int iter = 0; iter < n_iteracoes; ++iter) {
-        // Atualiza probabilidades a cada bloco (mudança significativa)
-        if ((iter + 1) % bloco == 0) {
-            float soma_qualidades = 0.0f;
+        // Atualização de probabilidades a cada bloco
+        if ((iter + 1) % bloco == 0 && iter > 0) {
+            vector<double> medias_qualidade(num_alphas, 0.0);
+            double soma_medias = 0.0;
+            int alphas_com_dados = 0;
+            
+            // Calcula médias de qualidade por alfa
             for (int j = 0; j < num_alphas; ++j) {
                 if (contador[j] > 0) {
-                    float media = qualidade_total[j] / contador[j];
-                    soma_qualidades += media;
+                    medias_qualidade[j] = qualidade_total[j] / contador[j];
+                    soma_medias += medias_qualidade[j];
+                    alphas_com_dados++;
                 }
             }
             
-            // Recalcula probabilidades baseado na qualidade
-            if (soma_qualidades > 0.0f) {
+            // Atualiza probabilidades apenas se há dados suficientes
+            if (soma_medias > epsilon && alphas_com_dados > 0) {
                 for (int j = 0; j < num_alphas; ++j) {
                     if (contador[j] > 0) {
-                        float media = qualidade_total[j] / contador[j];
-                        probabilidades[j] = media / soma_qualidades;
+                        probabilidades[j] = medias_qualidade[j] / soma_medias;
                     } else {
-                        probabilidades[j] = 0.0f;
+                        // Mantém probabilidade mínima para exploração
+                        probabilidades[j] = 0.01;
+                    }
+                }
+                
+                // Normaliza probabilidades
+                double soma_prob = 0.0;
+                for (int j = 0; j < num_alphas; ++j) {
+                    soma_prob += probabilidades[j];
+                }
+                if (soma_prob > epsilon) {
+                    for (int j = 0; j < num_alphas; ++j) {
+                        probabilidades[j] /= soma_prob;
                     }
                 }
             } else {
-                // Se nenhum alpha teve sucesso, reinicia equiprovável
-                for (int j = 0; j < num_alphas; ++j) {
-                    probabilidades[j] = 1.0f / num_alphas;
-                }
+                // Reset para distribuição uniforme se não há dados suficientes
+                fill(probabilidades.begin(), probabilidades.end(), prob_inicial);
             }
         }
         
-        // Seleção probabilística de alpha com fallback
-        float rand_val = (float)rand() / RAND_MAX;
+        // Seleção probabilística de alfa
+        double rand_val = (double)rand() / RAND_MAX;
         int alpha_idx = 0;
-        float acumulado = 0.0f;
-        bool alpha_selecionado = false;
+        double acumulado = 0.0;
         
         for (int j = 0; j < num_alphas; ++j) {
             acumulado += probabilidades[j];
             if (rand_val <= acumulado) {
                 alpha_idx = j;
-                alpha_selecionado = true;
                 break;
             }
         }
         
-        // Fallback: se algo deu errado, escolhe aleatoriamente
-        if (!alpha_selecionado) {
-            alpha_idx = rand() % num_alphas;
-        }
-        
-        // Executa GRASP
         auto [solucao, peso_total] = construir_solucao_grasp(grafo, alpha[alpha_idx]);
         
-        // Atualiza melhor solução e estatísticas
+        // Atualização dados
         if (!solucao.empty()) {
             if (peso_total < melhor_peso) {
                 melhor_peso = peso_total;
@@ -313,10 +325,12 @@ pair<vector<char>, float> Guloso::guloso_randomizado_reativo(Grafo &grafo, float
             }
             
             contador[alpha_idx]++;
-            if (peso_total > 0.0f) {
-                qualidade_total[alpha_idx] += 1.0f / peso_total;
+            
+            // Atualização das qualidades baseada na significância do peso
+            if (peso_total > epsilon) {
+                qualidade_total[alpha_idx] += 1.0 / peso_total;
             } else {
-                qualidade_total[alpha_idx] += 1000.0f;
+                qualidade_total[alpha_idx] += 1.0 / epsilon;
             }
         }
     }
