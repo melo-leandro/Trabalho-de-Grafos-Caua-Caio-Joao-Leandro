@@ -12,14 +12,6 @@ class Guloso {
         Guloso();
         ~Guloso();
 
-        //TRUE -> 'b' tem maior prioridade (vai para o topo)
-        //FALSE -> 'a' tem maior prioridade (vai para o topo)
-        struct NoComparator {
-            bool operator()(No* a, No* b) const {
-                return a->get_peso() > b->get_peso(); // min-heap por peso
-            }
-        };
-
         static pair<vector<char>, float> algoritmo_guloso_adaptativo(Grafo &grafo);
         static pair<vector<char>, float> guloso_randomizado(Grafo &grafo, float alpha, int n_iteracoes);
         static pair<vector<char>, float> guloso_randomizado_reativo(Grafo &grafo, float alpha[], int n_iteracoes, int bloco);

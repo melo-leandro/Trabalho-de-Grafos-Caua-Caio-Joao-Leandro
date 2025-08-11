@@ -191,7 +191,7 @@ pair<vector<char>, float> Guloso::construir_solucao_grasp(Grafo &grafo, float al
                 LRC.push_back(candidato.first);
             }
         } else {
-            float limite = min_beneficio + alpha * (max_beneficio - min_beneficio);
+            float limite = max_beneficio - alpha * (max_beneficio - min_beneficio);
             for (const auto& candidato : candidatos) {
                 if (candidato.second >= limite) {
                     LRC.push_back(candidato.first);
