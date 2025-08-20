@@ -24,7 +24,7 @@ void Gerenciador::comandos(Grafo* grafo) {
     cout<<"(f) Arvore Geradora Minima (Algoritmo de Kruskal);"<<endl;
     cout<<"(g) Arvore de caminhamento em profundidade;"<<endl;
     cout<<"(h) Raio, diametro, centro e periferia do grafo;"<<endl;
-    cout<<"(j) Algoritmos Gulosos;"<<endl;
+    cout<<"(i) Algoritmos Gulosos;"<<endl;
     cout<<"(0) Sair;"<<endl<<endl;
 
     char resp;
@@ -237,8 +237,8 @@ void Gerenciador::comandos(Grafo* grafo) {
             break;
         }
 
-        case 'j': {
-            cout<<"Algoritmos Gulosos"<<endl;
+        case 'i': {
+            cout<<"Algoritmos Gulosos Adaptativos"<<endl;
             cout<<"Digite uma das opcoes abaixo e pressione enter:"<<endl<<endl;
             cout<<"(a) Algoritmo Guloso Tradicional;"<<endl;
             cout<<"(b) Algoritmo Guloso Randomizado;"<<endl;
@@ -290,8 +290,16 @@ void Gerenciador::comandos(Grafo* grafo) {
                     int bloco;
                     cin >> bloco;
                     
-                    // Valores padrão de alpha para GRASP reativo
-                    float alpha_valores[3] = {0.1f, 0.3f, 0.5f};
+                    cout << "Digite a quantidade de alphas que deseja utilizar: ";
+                    int n;
+                    cin >> n;
+
+                    cout << "Digite os valores de alpha (0.0 a 1.0): ";
+                    float* alpha_valores = new float [n];
+
+                    for(int i = 0; i < n; i++) {
+                        cin >> alpha_valores[i];
+                    }
                     
                     auto [solucao, peso_total] = Guloso::guloso_randomizado_reativo(*grafo, alpha_valores, n_iteracoes, bloco);
                     
